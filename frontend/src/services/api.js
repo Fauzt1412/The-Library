@@ -105,18 +105,20 @@ export const booksAPI = {
     }
     
     const formData = new FormData();
-    // Add userId for authentication
     formData.append('userId', currentUser._id);
+    formData.append('title', bookData.title);
+    formData.append('author', bookData.author);
+    formData.append('categories', bookData.categories);
+    formData.append('description', bookData.description);
+    formData.append('publishedDate', bookData.publishedDate);
     
-    Object.keys(bookData).forEach(key => {
-      if (bookData[key] !== null && bookData[key] !== undefined && key !== 'currentImageUrl') {
-        if (key === 'readingLinks') {
-          formData.append(key, JSON.stringify(bookData[key]));
-        } else {
-          formData.append(key, bookData[key]);
-        }
-      }
-    });
+    if (bookData.coverImage) {
+      formData.append('coverImage', bookData.coverImage);
+    }
+    
+    if (bookData.readingLinks) {
+      formData.append('readingLinks', JSON.stringify(bookData.readingLinks));
+    }
     
     return api.post('/books', formData, {
       headers: {
@@ -131,18 +133,20 @@ export const booksAPI = {
     }
     
     const formData = new FormData();
-    // Add userId for authentication
     formData.append('userId', currentUser._id);
+    formData.append('title', bookData.title);
+    formData.append('author', bookData.author);
+    formData.append('categories', bookData.categories);
+    formData.append('description', bookData.description);
+    formData.append('publishedDate', bookData.publishedDate);
     
-    Object.keys(bookData).forEach(key => {
-      if (bookData[key] !== null && bookData[key] !== undefined && key !== 'currentImageUrl') {
-        if (key === 'readingLinks') {
-          formData.append(key, JSON.stringify(bookData[key]));
-        } else {
-          formData.append(key, bookData[key]);
-        }
-      }
-    });
+    if (bookData.coverImage) {
+      formData.append('coverImage', bookData.coverImage);
+    }
+    
+    if (bookData.readingLinks) {
+      formData.append('readingLinks', JSON.stringify(bookData.readingLinks));
+    }
     
     return api.put(`/books/${id}`, formData, {
       headers: {
@@ -174,18 +178,21 @@ export const gamesAPI = {
     }
     
     const formData = new FormData();
-    // Add userId for authentication
     formData.append('userId', currentUser._id);
+    formData.append('title', gameData.title);
+    formData.append('developer', gameData.developer);
+    formData.append('genre', gameData.genre);
+    formData.append('platform', gameData.platform);
+    formData.append('description', gameData.description);
+    formData.append('releaseDate', gameData.releaseDate);
     
-    Object.keys(gameData).forEach(key => {
-      if (gameData[key] !== null && gameData[key] !== undefined && key !== 'currentImageUrl') {
-        if (key === 'platformLinks') {
-          formData.append(key, JSON.stringify(gameData[key]));
-        } else {
-          formData.append(key, gameData[key]);
-        }
-      }
-    });
+    if (gameData.coverImage) {
+      formData.append('coverImage', gameData.coverImage);
+    }
+    
+    if (gameData.platformLinks) {
+      formData.append('platformLinks', JSON.stringify(gameData.platformLinks));
+    }
     
     return api.post('/games', formData, {
       headers: {
@@ -200,18 +207,21 @@ export const gamesAPI = {
     }
     
     const formData = new FormData();
-    // Add userId for authentication
     formData.append('userId', currentUser._id);
+    formData.append('title', gameData.title);
+    formData.append('developer', gameData.developer);
+    formData.append('genre', gameData.genre);
+    formData.append('platform', gameData.platform);
+    formData.append('description', gameData.description);
+    formData.append('releaseDate', gameData.releaseDate);
     
-    Object.keys(gameData).forEach(key => {
-      if (gameData[key] !== null && gameData[key] !== undefined && key !== 'currentImageUrl') {
-        if (key === 'platformLinks') {
-          formData.append(key, JSON.stringify(gameData[key]));
-        } else {
-          formData.append(key, gameData[key]);
-        }
-      }
-    });
+    if (gameData.coverImage) {
+      formData.append('coverImage', gameData.coverImage);
+    }
+    
+    if (gameData.platformLinks) {
+      formData.append('platformLinks', JSON.stringify(gameData.platformLinks));
+    }
     
     return api.put(`/games/${id}`, formData, {
       headers: {
@@ -331,18 +341,31 @@ export const submissionsAPI = {
     }
     
     const formData = new FormData();
-    // Add userId for authentication
     formData.append('userId', currentUser._id);
+    formData.append('type', submissionData.type);
+    formData.append('title', submissionData.title);
+    formData.append('description', submissionData.description);
     
-    Object.keys(submissionData).forEach(key => {
-      if (submissionData[key] !== null && submissionData[key] !== undefined) {
-        if (key === 'readingLinks' || key === 'platformLinks') {
-          formData.append(key, JSON.stringify(submissionData[key]));
-        } else {
-          formData.append(key, submissionData[key]);
-        }
+    if (submissionData.type === 'book') {
+      formData.append('author', submissionData.author);
+      formData.append('categories', submissionData.categories);
+      formData.append('publishedDate', submissionData.publishedDate);
+      if (submissionData.readingLinks) {
+        formData.append('readingLinks', JSON.stringify(submissionData.readingLinks));
       }
-    });
+    } else {
+      formData.append('developer', submissionData.developer);
+      formData.append('genre', submissionData.genre);
+      formData.append('platform', submissionData.platform);
+      formData.append('releaseDate', submissionData.releaseDate);
+      if (submissionData.platformLinks) {
+        formData.append('platformLinks', JSON.stringify(submissionData.platformLinks));
+      }
+    }
+    
+    if (submissionData.coverImage) {
+      formData.append('coverImage', submissionData.coverImage);
+    }
     
     return api.post('/submissions', formData, {
       headers: {
@@ -405,37 +428,11 @@ export const editRequestsAPI = {
       throw new Error('User not authenticated');
     }
     
-    // Check if there's a file upload (coverImage)
-    const hasFile = editRequestData.proposedChanges && editRequestData.proposedChanges.coverImage;
-    
-    if (hasFile) {
-      // Use FormData for file uploads
-      const formData = new FormData();
-      formData.append('userId', currentUser._id);
-      formData.append('contentType', editRequestData.contentType);
-      formData.append('contentId', editRequestData.contentId);
-      formData.append('changeSummary', editRequestData.changeSummary);
-      
-      // Handle the file upload
-      formData.append('coverImage', editRequestData.proposedChanges.coverImage);
-      
-      // Add other proposed changes (excluding the file)
-      const otherChanges = { ...editRequestData.proposedChanges };
-      delete otherChanges.coverImage;
-      formData.append('proposedChanges', JSON.stringify(otherChanges));
-      
-      return api.post('/edit-requests', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-    } else {
-      // Use JSON for non-file requests
-      return api.post('/edit-requests', {
-        ...editRequestData,
-        userId: currentUser._id
-      });
-    }
+    // Always use JSON for edit requests - keep it simple
+    return api.post('/edit-requests', {
+      ...editRequestData,
+      userId: currentUser._id
+    });
   },
   getAll: () => {
     const user = getCurrentUser();

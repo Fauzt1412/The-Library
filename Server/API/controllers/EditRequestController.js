@@ -11,18 +11,7 @@ const SubmitEditRequest = async (req, res) => {
         console.log('   User ID:', req.user ? req.user._id : 'No user ID');
         console.log('   Request body:', JSON.stringify(req.body, null, 2));
         
-        let { contentType, contentId, proposedChanges, changeSummary } = req.body;
-        
-        // Handle FormData requests (when file upload is involved)
-        if (req.body.proposedChanges && typeof req.body.proposedChanges === 'string') {
-            try {
-                proposedChanges = JSON.parse(req.body.proposedChanges);
-                console.log('📝 Parsed proposedChanges from FormData:', proposedChanges);
-            } catch (e) {
-                console.error('❌ Error parsing proposedChanges:', e);
-                return res.status(400).json({ error: 'Invalid proposedChanges format' });
-            }
-        }
+        const { contentType, contentId, proposedChanges, changeSummary } = req.body;
         
         // Validate required fields
         if (!contentType) {
@@ -100,25 +89,6 @@ const SubmitEditRequest = async (req, res) => {
         }
         
         console.log('✅ No existing pending requests');
-        
-        // Handle file upload if present
-        if (req.file) {
-            const uploadPath = contentType === 'book' ? 'books' : 'games';
-            const imageUrl = `/uploads/${uploadPath}/${req.file.filename}`;
-            console.log('📷 Edit request image uploaded:', {
-                originalName: req.file.originalname,
-                filename: req.file.filename,
-                path: imageUrl,
-                destination: req.file.destination
-            });
-            
-            // Add the new image to proposed changes
-            if (contentType === 'book') {
-                proposedChanges.Coverpage = imageUrl;
-            } else {
-                proposedChanges.coverImage = imageUrl;
-            }
-        }
         
         // Create the edit request
         console.log('📝 Creating edit request...');

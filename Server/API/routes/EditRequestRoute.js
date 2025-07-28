@@ -1,7 +1,6 @@
 const Router = require('express').Router;
 const EditRequestRoute = Router();
 const { authenticateUser, requireAdmin } = require('../middleware/auth');
-const { uploadSubmissionCover, handleUploadError } = require('../middleware/upload');
 
 const {
     SubmitEditRequest,
@@ -14,7 +13,7 @@ const {
 } = require('../controllers/EditRequestController');
 
 // User routes
-EditRequestRoute.post('/edit-requests', uploadSubmissionCover, handleUploadError, authenticateUser, SubmitEditRequest);
+EditRequestRoute.post('/edit-requests', authenticateUser, SubmitEditRequest);
 EditRequestRoute.get('/my-edit-requests', authenticateUser, GetMyEditRequests);
 EditRequestRoute.get('/my-published-content', authenticateUser, GetMyPublishedContent);
 

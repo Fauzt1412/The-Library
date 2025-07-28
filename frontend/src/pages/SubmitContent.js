@@ -87,14 +87,6 @@ const SubmitContent = () => {
     try {
       const currentForm = activeTab === 'book' ? bookForm : gameForm;
       
-      console.log('📝 Submit Content - Current Form:', {
-        type: activeTab,
-        title: currentForm.title,
-        hasImage: !!currentForm.coverImage,
-        imageType: currentForm.coverImage?.type,
-        imageSize: currentForm.coverImage?.size
-      });
-      
       // Validate required fields
       if (!currentForm.coverImage) {
         setError('Cover image is required');
@@ -115,15 +107,7 @@ const SubmitContent = () => {
         submissionData.platformLinks = gameForm.platformLinks.filter(link => link.name && link.url);
       }
       
-      console.log('📤 Submitting data:', {
-        type: submissionData.type,
-        title: submissionData.title,
-        hasImage: !!submissionData.coverImage,
-        linksCount: activeTab === 'book' ? submissionData.readingLinks.length : submissionData.platformLinks.length
-      });
-      
       const response = await submissionsAPI.submit(submissionData);
-      console.log('✅ Submission successful:', response.data);
       
       setSuccess((activeTab === 'book' ? 'Book' : 'Game') + ' submitted successfully! It will be reviewed by an admin before being published. You will receive a notification once the review is complete.');
       

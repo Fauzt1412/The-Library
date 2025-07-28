@@ -426,6 +426,81 @@ body {
   }
 }
 
+/* Dark Mode File Upload Styles */
+[data-theme="dark"] .file-upload-area {
+  border-color: #4dabf7;
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .file-upload-area:hover {
+  border-color: #74c0fc;
+  background: #2a2a2a;
+  box-shadow: 0 5px 15px rgba(77, 171, 247, 0.2);
+}
+
+[data-theme="dark"] .file-upload-area.drag-active {
+  border-color: #51cf66;
+  background: #1a2e1a;
+}
+
+[data-theme="dark"] .file-upload-area.error {
+  border-color: #ff6b6b;
+  background: #2e1a1a;
+}
+
+[data-theme="dark"] .upload-placeholder {
+  color: #4dabf7;
+}
+
+[data-theme="dark"] .upload-placeholder i {
+  color: #4dabf7;
+}
+
+[data-theme="dark"] .upload-placeholder h5 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .upload-placeholder p {
+  color: #b0b0b0;
+}
+
+[data-theme="dark"] .upload-placeholder small {
+  color: #888888;
+}
+
+[data-theme="dark"] .file-info {
+  background: #1a2e1a;
+  border-color: #51cf66;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .preview-image {
+  box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+}
+
+/* Dark mode form elements */
+[data-theme="dark"] .form-label {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .form-control {
+  background-color: #2a2a2a;
+  border-color: #4a4a4a;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .form-control:focus {
+  background-color: #2a2a2a;
+  border-color: #4dabf7;
+  color: #ffffff;
+  box-shadow: 0 0 0 0.2rem rgba(77, 171, 247, 0.25);
+}
+
+[data-theme="dark"] .form-text {
+  color: #b0b0b0;
+}
+
 /* Animation Classes */
 .fade-in {
   animation: fadeIn 0.5s ease-in;
