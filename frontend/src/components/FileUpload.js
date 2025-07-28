@@ -32,9 +32,17 @@ const FileUpload = ({
   };
 
   const handleFile = (file) => {
+    console.log('📷 FileUpload - File selected:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: file.lastModified
+    });
+    
     const validationError = validateFile(file);
     if (validationError) {
       setError(validationError);
+      console.log('❌ FileUpload - Validation error:', validationError);
       return;
     }
 
@@ -44,10 +52,12 @@ const FileUpload = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreview(e.target.result);
+      console.log('✅ FileUpload - Preview created successfully');
     };
     reader.readAsDataURL(file);
 
     // Call parent callback
+    console.log('📤 FileUpload - Calling onFileSelect with file:', file);
     onFileSelect(file);
   };
 
@@ -97,12 +107,15 @@ const FileUpload = ({
       
       {/* Upload Area */}
       <div
-        className={`file-upload-area ${dragActive ? 'drag-active' : ''} ${error ? 'error' : ''}`}
+        className={`border-2 border-dashed rounded p-4 text-center position-relative ${
+          dragActive ? 'border-primary bg-light' : 'border-secondary'
+        } ${error ? 'border-danger' : ''}`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={handleClick}
+        style={{ cursor: 'pointer', minHeight: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
         <input
           ref={fileInputRef}
@@ -113,36 +126,43 @@ const FileUpload = ({
         />
         
         {preview ? (
-          <div className="preview-container">
-            <img src={preview} alt="Preview" className="preview-image" />
-            <div className="preview-overlay">
+          <div className="w-100">
+            <img 
+              src={preview} 
+              alt="Preview" 
+              style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'cover' }}
+              className="rounded mb-2"
+            />
+            <div>
               <button
                 type="button"
-                className="btn btn-sm btn-danger remove-btn"
+                className="btn btn-sm btn-danger me-2"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleRemove();
                 }}
               >
-                <i className="fas fa-trash"></i>
+                <i className="fas fa-trash me-1"></i>
+                Remove
               </button>
               <button
                 type="button"
-                className="btn btn-sm btn-primary change-btn"
+                className="btn btn-sm btn-primary"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleClick();
                 }}
               >
-                <i className="fas fa-edit"></i>
+                <i className="fas fa-edit me-1"></i>
+                Change
               </button>
             </div>
           </div>
         ) : (
-          <div className="upload-placeholder">
-            <i className="fas fa-cloud-upload-alt fa-3x mb-3"></i>
-            <h5>Drag & Drop your image here</h5>
-            <p className="text-muted">or click to browse files</p>
+          <div className="w-100">
+            <i className="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+            <h5 className="mb-2">Drag & Drop your image here</h5>
+            <p className="text-muted mb-2">or click to browse files</p>
             <small className="text-muted">
               Supports: PNG, JPG, JPEG, GIF, WebP (Max {Math.round(maxSize / (1024 * 1024))}MB)
             </small>

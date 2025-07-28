@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { editRequestsAPI } from '../services/api';
-import SimpleDragDropUpload from '../components/SimpleDragDropUpload';
+import FileUpload from '../components/FileUpload';
 
 const MyContent = () => {
   const { user, isAuthenticated } = useAuth();
@@ -489,7 +489,7 @@ const MyContent = () => {
                           />
                         </div>
                         <div className="col-md-6 mb-3">
-                          <SimpleDragDropUpload
+                          <FileUpload
                             onFileSelect={(file) => setEditForm({...editForm, coverImage: file})}
                             currentImage={selectedContent?.Coverpage}
                             label="Book Cover Image (optional)"
@@ -615,7 +615,7 @@ const MyContent = () => {
                       </div>
                       
                       <div className="mb-3">
-                        <SimpleDragDropUpload
+                        <FileUpload
                           onFileSelect={(file) => setEditForm({...editForm, coverImage: file})}
                           currentImage={selectedContent?.coverImage}
                           label="Game Cover Image (optional)"

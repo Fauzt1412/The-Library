@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { booksAPI, gamesAPI, usersAPI, notificationsAPI, submissionsAPI, editRequestsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import SimpleDragDropUpload from '../components/SimpleDragDropUpload';
+import FileUpload from '../components/FileUpload';
 
 const AdminPanel = () => {
   const { user, isAuthenticated, isAdmin } = useAuth();
@@ -881,7 +881,7 @@ const AdminPanel = () => {
               />
             </div>
             <div className="col-md-6 mb-3">
-              <SimpleDragDropUpload
+              <FileUpload
                 onFileSelect={(file) => setBookForm({...bookForm, coverImage: file})}
                 currentImage={modalType === 'edit' && currentItem?.Coverpage ? currentItem.Coverpage : null}
                 label="Book Cover Image"
@@ -1022,7 +1022,7 @@ const AdminPanel = () => {
 
           </div>
           <div className="mb-3">
-            <SimpleDragDropUpload
+            <FileUpload
               onFileSelect={(file) => setGameForm({...gameForm, coverImage: file})}
               currentImage={modalType === 'edit' && currentItem?.coverImage ? currentItem.coverImage : null}
               label="Game Cover Image"

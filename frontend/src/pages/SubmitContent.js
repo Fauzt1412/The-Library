@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { submissionsAPI } from '../services/api';
-import SimpleDragDropUpload from '../components/SimpleDragDropUpload';
+import FileUpload from '../components/FileUpload';
 
 const SubmitContent = () => {
   const { user, isAuthenticated } = useAuth();
@@ -328,7 +328,7 @@ const SubmitContent = () => {
                     />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <SimpleDragDropUpload
+                    <FileUpload
                       onFileSelect={(file) => setBookForm({...bookForm, coverImage: file})}
                       label="Book Cover Image *"
                       accept="image/*"
@@ -402,7 +402,7 @@ const SubmitContent = () => {
                 </div>
                 
                 <div className="mb-3">
-                  <SimpleDragDropUpload
+                  <FileUpload
                     onFileSelect={(file) => setGameForm({...gameForm, coverImage: file})}
                     label="Game Cover Image *"
                     accept="image/*"
