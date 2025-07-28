@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const User = require('./API/models/users');
+const User = require('../Server/API/models/users');
 require('dotenv').config();
 
 const databaseURL = process.env.DATABASE_URL || 'mongodb://localhost:27017/Storage_database_SYS';
