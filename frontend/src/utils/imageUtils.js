@@ -1,37 +1,35 @@
 // Utility function to get the correct image URL
 export const getImageUrl = (imagePath) => {
   if (!imagePath) {
-    console.warn('🖼️ getImageUrl: No image path provided');
-    return null;
+    return getPlaceholderImage('book');
   }
   
-  const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:1412';
+  // Get base URL with fallback logic
+  let baseUrl = process.env.REACT_APP_API_URL;
   
-  // Debug logging
-  console.log('🖼️ getImageUrl:', {
-    imagePath,
-    baseUrl,
-    startsWithHttp: imagePath.startsWith('http'),
-    startsWithSlash: imagePath.startsWith('/')
-  });
+  // If environment variable is not set or is placeholder, determine based on current location
+  if (!baseUrl || baseUrl.includes('your-backend-name')) {
+    if (window.location.origin.includes('localhost')) {
+      baseUrl = 'http://localhost:1412';
+    } else {
+      baseUrl = 'https://the-library-a11t.onrender.com';
+    }
+  }
   
-  // If the imagePath already includes the full URL, return as is
+
+  
+  // If the imagePath already includes the full URL (Cloudinary, etc.), return as is
   if (imagePath.startsWith('http')) {
-    console.log('🖼️ Returning full URL:', imagePath);
     return imagePath;
   }
   
   // If the imagePath starts with '/', prepend the base URL
   if (imagePath.startsWith('/')) {
-    const fullUrl = `${baseUrl}${imagePath}`;
-    console.log('🖼️ Returning constructed URL:', fullUrl);
-    return fullUrl;
+    return `${baseUrl}${imagePath}`;
   }
   
   // Otherwise, assume it's a relative path and prepend base URL with '/'
-  const fullUrl = `${baseUrl}/${imagePath}`;
-  console.log('🖼️ Returning relative URL:', fullUrl);
-  return fullUrl;
+  return `${baseUrl}/${imagePath}`;
 };
 
 // Utility function to get placeholder image

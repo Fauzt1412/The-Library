@@ -67,7 +67,13 @@ app.get('/API/health', (req, res) => {
 });
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Use persistent disk path in production, local path in development
+const uploadsPath = process.env.NODE_ENV === 'production' 
+    ? '/opt/render/project/src/uploads' 
+    : path.join(__dirname, 'uploads');
+
+app.use('/uploads', express.static(uploadsPath));
+console.log('📁 Serving static files from:', uploadsPath);
 
 // Connect to MongoDB
 mongoose.connect(databaseURL)

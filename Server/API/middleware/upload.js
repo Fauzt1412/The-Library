@@ -9,10 +9,18 @@ const ensureDirectoryExists = (dirPath) => {
     }
 };
 
+// Get the correct uploads path based on environment
+const getUploadsPath = (subDir) => {
+    const basePath = process.env.NODE_ENV === 'production' 
+        ? '/opt/render/project/src/uploads' 
+        : path.join(__dirname, '../../uploads');
+    return path.join(basePath, subDir);
+};
+
 // Storage configuration for books
 const bookStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../../uploads/books');
+        const uploadPath = getUploadsPath('books');
         ensureDirectoryExists(uploadPath);
         cb(null, uploadPath);
     },
@@ -27,7 +35,7 @@ const bookStorage = multer.diskStorage({
 // Storage configuration for games
 const gameStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../../uploads/games');
+        const uploadPath = getUploadsPath('games');
         ensureDirectoryExists(uploadPath);
         cb(null, uploadPath);
     },
@@ -43,7 +51,7 @@ const gameStorage = multer.diskStorage({
 const submissionStorage = multer.diskStorage({
     destination: (req, file, cb) => {
         const type = req.body.type || 'books'; // Default to books if type not specified
-        const uploadPath = path.join(__dirname, `../../uploads/${type}s`);
+        const uploadPath = getUploadsPath(`${type}s`);
         ensureDirectoryExists(uploadPath);
         cb(null, uploadPath);
     },

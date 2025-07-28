@@ -88,12 +88,12 @@ REACT_APP_API_URL=https://your-backend-name.onrender.com
 **Build Command**: `npm run build`
 **Output Directory**: `build`
 
-### 3.3 Environment Variables in Vercel
+### 3.2 Environment Variables in Vercel
 Add this environment variable:
 
 | Key | Value |
 |-----|-------|
-| `REACT_APP_API_URL` | `https://your-backend-name.onrender.com` |
+| `REACT_APP_API_URL` | `https://the-library-a11t.onrender.com` |
 
 ### 3.4 Deploy Frontend
 1. Click **"Deploy"**
