@@ -406,9 +406,9 @@ export const editRequestsAPI = {
     }
     
     // Check if there's a file upload (coverImage)
-    const hasFileUpload = editRequestData.proposedChanges && editRequestData.proposedChanges.coverImage;
+    const hasFile = editRequestData.proposedChanges && editRequestData.proposedChanges.coverImage;
     
-    if (hasFileUpload) {
+    if (hasFile) {
       // Use FormData for file uploads
       const formData = new FormData();
       formData.append('userId', currentUser._id);

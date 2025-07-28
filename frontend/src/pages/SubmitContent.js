@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import FileUpload from '../components/FileUpload';
 import { submissionsAPI } from '../services/api';
 
 const SubmitContent = () => {
@@ -17,7 +16,6 @@ const SubmitContent = () => {
     description: '',
     publishedDate: '',
     coverImage: null,
-
     readingLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
   });
   
@@ -29,7 +27,6 @@ const SubmitContent = () => {
     releaseDate: '',
     description: '',
     coverImage: null,
-
     platformLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
   });
   
@@ -124,7 +121,6 @@ const SubmitContent = () => {
           description: '',
           publishedDate: '',
           coverImage: null,
-
           readingLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
         });
       } else {
@@ -136,7 +132,6 @@ const SubmitContent = () => {
           releaseDate: '',
           description: '',
           coverImage: null,
-
           platformLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
         });
       }
@@ -318,12 +313,15 @@ const SubmitContent = () => {
                     />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <FileUpload
-                      onFileSelect={(file) => setBookForm({...bookForm, coverImage: file})}
-                      label="Book Cover Image *"
+                    <label className="form-label">Book Cover Image *</label>
+                    <input
+                      type="file"
+                      className="form-control"
                       accept="image/*"
-                      maxSize={5 * 1024 * 1024}
+                      onChange={(e) => setBookForm({...bookForm, coverImage: e.target.files[0]})}
+                      required
                     />
+                    <div className="form-text">Maximum file size: 5MB. Supported formats: JPG, PNG, GIF, WebP</div>
                   </div>
                 </div>
                 
@@ -392,12 +390,15 @@ const SubmitContent = () => {
                 </div>
                 
                 <div className="mb-3">
-                  <FileUpload
-                    onFileSelect={(file) => setGameForm({...gameForm, coverImage: file})}
-                    label="Game Cover Image *"
+                  <label className="form-label">Game Cover Image *</label>
+                  <input
+                    type="file"
+                    className="form-control"
                     accept="image/*"
-                    maxSize={5 * 1024 * 1024}
+                    onChange={(e) => setGameForm({...gameForm, coverImage: e.target.files[0]})}
+                    required
                   />
+                  <div className="form-text">Maximum file size: 5MB. Supported formats: JPG, PNG, GIF, WebP</div>
                 </div>
                 
                 {renderLinkInputs(gameForm.platformLinks, 'game')}

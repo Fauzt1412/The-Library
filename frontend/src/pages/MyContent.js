@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { editRequestsAPI } from '../services/api';
-import FileUpload from '../components/FileUpload';
 
 const MyContent = () => {
   const { user, isAuthenticated } = useAuth();
@@ -56,8 +55,7 @@ const MyContent = () => {
 
         readingLinks: item.readingLinks && item.readingLinks.length > 0 ? 
           item.readingLinks : [{ name: '', url: '', icon: 'fas fa-external-link-alt' }],
-        coverImage: null,
-        currentImageUrl: item.Coverpage || ''
+        coverImage: null
       });
     } else {
       setEditForm({
@@ -70,8 +68,7 @@ const MyContent = () => {
 
         platformLinks: item.platformLinks && item.platformLinks.length > 0 ? 
           item.platformLinks : [{ name: '', url: '', icon: 'fas fa-external-link-alt' }],
-        coverImage: null,
-        currentImageUrl: item.coverImage || ''
+        coverImage: null
       });
     }
     
@@ -491,13 +488,28 @@ const MyContent = () => {
                           />
                         </div>
                         <div className="col-md-6 mb-3">
-                          <FileUpload
-                            onFileSelect={(file) => setEditForm({...editForm, coverImage: file})}
-                            currentImage={editForm.currentImageUrl}
-                            label="Book Cover Image (optional - leave empty to keep current)"
+                          <label className="form-label">Book Cover Image (optional)</label>
+                          <input
+                            type="file"
+                            className="form-control"
                             accept="image/*"
-                            maxSize={5 * 1024 * 1024}
+                            onChange={(e) => setEditForm({...editForm, coverImage: e.target.files[0]})}
                           />
+                          <div className="form-text">Leave empty to keep current image. Max size: 5MB</div>
+                          {selectedContent?.Coverpage && (
+                            <div className="mt-2">
+                              <small className="text-muted">Current image:</small><br/>
+                              <img 
+                                src={`http://localhost:1412${selectedContent.Coverpage}`}
+                                alt="Current cover"
+                                style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'cover' }}
+                                className="border rounded"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                       
@@ -617,13 +629,28 @@ const MyContent = () => {
                       </div>
                       
                       <div className="mb-3">
-                        <FileUpload
-                          onFileSelect={(file) => setEditForm({...editForm, coverImage: file})}
-                          currentImage={editForm.currentImageUrl}
-                          label="Game Cover Image (optional - leave empty to keep current)"
+                        <label className="form-label">Game Cover Image (optional)</label>
+                        <input
+                          type="file"
+                          className="form-control"
                           accept="image/*"
-                          maxSize={5 * 1024 * 1024}
+                          onChange={(e) => setEditForm({...editForm, coverImage: e.target.files[0]})}
                         />
+                        <div className="form-text">Leave empty to keep current image. Max size: 5MB</div>
+                        {selectedContent?.coverImage && (
+                          <div className="mt-2">
+                            <small className="text-muted">Current image:</small><br/>
+                            <img 
+                              src={`http://localhost:1412${selectedContent.coverImage}`}
+                              alt="Current cover"
+                              style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'cover' }}
+                              className="border rounded"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                       
                       <div className="mb-3">

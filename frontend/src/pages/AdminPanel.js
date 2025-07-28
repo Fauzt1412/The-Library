@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { booksAPI, gamesAPI, usersAPI, notificationsAPI, submissionsAPI, editRequestsAPI } from '../services/api';
-import FileUpload from '../components/FileUpload';
 import { useAuth } from '../context/AuthContext';
 
 const AdminPanel = () => {
@@ -47,7 +46,6 @@ const AdminPanel = () => {
     description: '',
     publishedDate: '',
     coverImage: null,
-
     readingLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
   });
 
@@ -59,7 +57,6 @@ const AdminPanel = () => {
     releaseDate: '',
     description: '',
     coverImage: null,
-
     platformLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
   });
 
@@ -304,28 +301,16 @@ const AdminPanel = () => {
     setModalType('edit');
     setCurrentItem(item);
     if (activeTab === 'books') {
-      console.log('📝 Admin Edit Book:', {
-        title: item.title,
-        coverpage: item.Coverpage,
-        currentImageUrl: item.Coverpage || ''
-      });
       setBookForm({
         title: item.title || '',
         author: item.author || '',
         categories: item.categories || '',
         description: item.description || '',
         publishedDate: item.publishedDate ? item.publishedDate.split('T')[0] : '',
-        coverImage: null, // Will be handled by FileUpload component
-        currentImageUrl: item.Coverpage || '',
-
+        coverImage: null,
         readingLinks: item.readingLinks && item.readingLinks.length > 0 ? item.readingLinks : [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
       });
     } else if (activeTab === 'games') {
-      console.log('🎮 Admin Edit Game:', {
-        title: item.title,
-        coverImage: item.coverImage,
-        currentImageUrl: item.coverImage || ''
-      });
       setGameForm({
         title: item.title || '',
         genre: item.genre || '',
@@ -333,9 +318,7 @@ const AdminPanel = () => {
         platform: item.platform || '',
         releaseDate: item.releaseDate ? item.releaseDate.split('T')[0] : '',
         description: item.description || '',
-        coverImage: null, // Will be handled by FileUpload component
-        currentImageUrl: item.coverImage || '',
-
+        coverImage: null,
         platformLinks: item.platformLinks && item.platformLinks.length > 0 ? item.platformLinks : [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
       });
     } else if (activeTab === 'users') {
@@ -681,8 +664,6 @@ const AdminPanel = () => {
       description: '',
       publishedDate: '',
       coverImage: null,
-      currentImageUrl: '',
-
       readingLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
     });
     setGameForm({
@@ -693,8 +674,6 @@ const AdminPanel = () => {
       releaseDate: '',
       description: '',
       coverImage: null,
-      currentImageUrl: '',
-
       platformLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
     });
     setUserForm({
@@ -901,13 +880,27 @@ const AdminPanel = () => {
               />
             </div>
             <div className="col-md-6 mb-3">
-              <FileUpload
-                onFileSelect={(file) => setBookForm({...bookForm, coverImage: file})}
-                currentImage={bookForm.currentImageUrl}
-                label="Book Cover Image"
+              <label className="form-label">Book Cover Image</label>
+              <input
+                type="file"
+                className="form-control"
                 accept="image/*"
-                maxSize={5 * 1024 * 1024} // 5MB
+                onChange={(e) => setBookForm({...bookForm, coverImage: e.target.files[0]})}
               />
+              {modalType === 'edit' && currentItem?.Coverpage && (
+                <div className="mt-2">
+                  <small className="text-muted">Current image:</small><br/>
+                  <img 
+                    src={`http://localhost:1412${currentItem.Coverpage}`}
+                    alt="Current cover"
+                    style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'cover' }}
+                    className="border rounded"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
             <div className="mb-3">
@@ -1042,13 +1035,27 @@ const AdminPanel = () => {
 
           </div>
           <div className="mb-3">
-            <FileUpload
-              onFileSelect={(file) => setGameForm({...gameForm, coverImage: file})}
-              currentImage={gameForm.currentImageUrl}
-              label="Game Cover Image"
+            <label className="form-label">Game Cover Image</label>
+            <input
+              type="file"
+              className="form-control"
               accept="image/*"
-              maxSize={5 * 1024 * 1024} // 5MB
+              onChange={(e) => setGameForm({...gameForm, coverImage: e.target.files[0]})}
             />
+            {modalType === 'edit' && currentItem?.coverImage && (
+              <div className="mt-2">
+                <small className="text-muted">Current image:</small><br/>
+                <img 
+                  src={`http://localhost:1412${currentItem.coverImage}`}
+                  alt="Current cover"
+                  style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'cover' }}
+                  className="border rounded"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
           </div>
           
           <div className="mb-3">
