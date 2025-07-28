@@ -34,7 +34,8 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🔐 Attempting login with:', credentials.username);
       
-      const response = await fetch('http://localhost:1412/API/login', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:1412';
+      const response = await fetch(`${apiUrl}/API/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -69,7 +70,8 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('📝 Attempting signup with:', userData.username);
       
-      const response = await fetch('http://localhost:1412/API/signup', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:1412';
+      const response = await fetch(`${apiUrl}/API/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -11,12 +11,20 @@ console.log(`🚀 Starting server on port ${port}`);
 console.log(`📊 Database URL: ${databaseURL}`);
 
 // CORS configuration
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    process.env.FRONTEND_URL // This will be your Vercel URL
+].filter(Boolean); // Remove undefined values
+
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id']
 }));
+
+console.log('🌐 CORS configured for origins:', allowedOrigins);
 
 // Use built-in Express body parsers
 app.use(express.json({ limit: '10mb' }));
