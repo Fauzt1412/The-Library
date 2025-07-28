@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { booksAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
-import { getImageUrl, getPlaceholderImage } from '../utils/imageUtils';
-import QuickImageTest from '../components/QuickImageTest';
-import ServerTest from '../components/ServerTest';
 
 const Books = () => {
   const [books, setBooks] = useState([]);
@@ -98,8 +95,6 @@ const Books = () => {
 
   return (
     <div className="container py-5 fade-in">
-      <ServerTest />
-      <QuickImageTest />
       <div className="row mb-4">
         <div className="col-12">
           <h1 className="section-title">Our Book Collection</h1>
@@ -167,11 +162,11 @@ const Books = () => {
               <div key={book._id} className="col-lg-3 col-md-4 col-sm-6 mb-4">
                 <div className="card h-100">
                   <img 
-                    src={book.Coverpage ? getImageUrl(book.Coverpage) : getPlaceholderImage('book')} 
+                    src={book.Coverpage ? `http://localhost:1412${book.Coverpage}` : 'https://via.placeholder.com/300x400/667eea/white?text=Book+Cover'} 
                     className="card-img-top" 
                     alt={book.title}
                     onError={(e) => {
-                      e.target.src = getPlaceholderImage('book');
+                      e.target.src = 'https://via.placeholder.com/300x400/667eea/white?text=Book+Cover';
                     }}
                   />
                   <div className="card-body d-flex flex-column">
