@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { getImageUrl } from '../utils/imageUtils';
 
 const FileUpload = ({ 
   onFileSelect, 
@@ -9,13 +8,13 @@ const FileUpload = ({
   label = "Upload Image"
 }) => {
   const [dragActive, setDragActive] = useState(false);
-  const [preview, setPreview] = useState(currentImage ? getImageUrl(currentImage) : null);
+  const [preview, setPreview] = useState(currentImage ? `http://localhost:1412${currentImage}` : null);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
   // Update preview when currentImage changes
   useEffect(() => {
-    setPreview(currentImage ? getImageUrl(currentImage) : null);
+    setPreview(currentImage ? `http://localhost:1412${currentImage}` : null);
   }, [currentImage]);
 
   const validateFile = (file) => {

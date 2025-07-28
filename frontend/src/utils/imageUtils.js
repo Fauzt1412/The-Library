@@ -4,31 +4,10 @@ export const getImageUrl = (imagePath) => {
     return getPlaceholderImage('book');
   }
   
-  // Determine base URL - prioritize local development detection
-  let baseUrl;
+  // Simple, reliable approach - use localhost for development
+  const baseUrl = 'http://localhost:1412';
   
-  // If running on localhost, always use local server
-  if (window.location.origin.includes('localhost')) {
-    baseUrl = 'http://localhost:1412';
-  } else {
-    // If in production, use environment variable or fallback to production URL
-    baseUrl = process.env.REACT_APP_API_URL || 'https://the-library-a11t.onrender.com';
-  }
-  
-  // Debug logging
-  console.log('🔍 Debug imageUtils:', {
-    imagePath,
-    envVar: process.env.REACT_APP_API_URL,
-    windowOrigin: window.location.origin,
-    isLocalhost: window.location.origin.includes('localhost'),
-    finalBaseUrl: baseUrl
-  });
-  
-  console.log('🎯 Final baseUrl:', baseUrl);
-  
-
-  
-  // If the imagePath already includes the full URL (Cloudinary, etc.), return as is
+  // If the imagePath already includes the full URL, return as is
   if (imagePath.startsWith('http')) {
     return imagePath;
   }
