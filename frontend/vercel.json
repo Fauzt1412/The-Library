@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "name": "library-games-store",
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
