@@ -304,6 +304,11 @@ const AdminPanel = () => {
     setModalType('edit');
     setCurrentItem(item);
     if (activeTab === 'books') {
+      console.log('📝 Admin Edit Book:', {
+        title: item.title,
+        coverpage: item.Coverpage,
+        currentImageUrl: item.Coverpage || ''
+      });
       setBookForm({
         title: item.title || '',
         author: item.author || '',
@@ -316,6 +321,11 @@ const AdminPanel = () => {
         readingLinks: item.readingLinks && item.readingLinks.length > 0 ? item.readingLinks : [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
       });
     } else if (activeTab === 'games') {
+      console.log('🎮 Admin Edit Game:', {
+        title: item.title,
+        coverImage: item.coverImage,
+        currentImageUrl: item.coverImage || ''
+      });
       setGameForm({
         title: item.title || '',
         genre: item.genre || '',

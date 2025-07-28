@@ -16,6 +16,12 @@ const SubmitContent = async (req, res) => {
         if (req.file) {
             const uploadPath = req.body.type === 'book' ? 'books' : 'games';
             submissionData.coverImage = `/uploads/${uploadPath}/${req.file.filename}`;
+            console.log('📷 Submission image saved:', {
+                originalName: req.file.originalname,
+                filename: req.file.filename,
+                path: submissionData.coverImage,
+                destination: req.file.destination
+            });
         }
         
         // Parse links if they exist

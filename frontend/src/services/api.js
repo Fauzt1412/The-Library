@@ -405,10 +405,37 @@ export const editRequestsAPI = {
       throw new Error('User not authenticated');
     }
     
-    return api.post('/edit-requests', {
-      ...editRequestData,
-      userId: currentUser._id
-    });
+    // Check if there's a file upload (coverImage)
+    const hasFileUpload = editRequestData.proposedChanges && editRequestData.proposedChanges.coverImage;
+    
+    if (hasFileUpload) {
+      // Use FormData for file uploads
+      const formData = new FormData();
+      formData.append('userId', currentUser._id);
+      formData.append('contentType', editRequestData.contentType);
+      formData.append('contentId', editRequestData.contentId);
+      formData.append('changeSummary', editRequestData.changeSummary);
+      
+      // Handle the file upload
+      formData.append('coverImage', editRequestData.proposedChanges.coverImage);
+      
+      // Add other proposed changes (excluding the file)
+      const otherChanges = { ...editRequestData.proposedChanges };
+      delete otherChanges.coverImage;
+      formData.append('proposedChanges', JSON.stringify(otherChanges));
+      
+      return api.post('/edit-requests', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    } else {
+      // Use JSON for non-file requests
+      return api.post('/edit-requests', {
+        ...editRequestData,
+        userId: currentUser._id
+      });
+    }
   },
   getAll: () => {
     const user = getCurrentUser();
