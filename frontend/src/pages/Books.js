@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { booksAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
 import { getImageUrl, getPlaceholderImage } from '../utils/imageUtils';
+import QuickImageTest from '../components/QuickImageTest';
+import ServerTest from '../components/ServerTest';
 
 const Books = () => {
   const [books, setBooks] = useState([]);
@@ -96,6 +98,8 @@ const Books = () => {
 
   return (
     <div className="container py-5 fade-in">
+      <ServerTest />
+      <QuickImageTest />
       <div className="row mb-4">
         <div className="col-12">
           <h1 className="section-title">Our Book Collection</h1>

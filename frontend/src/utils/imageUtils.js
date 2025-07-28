@@ -7,6 +7,14 @@ export const getImageUrl = (imagePath) => {
   // Get base URL with fallback logic
   let baseUrl = process.env.REACT_APP_API_URL;
   
+  // Debug logging
+  console.log('🔍 Debug imageUtils:', {
+    imagePath,
+    envVar: process.env.REACT_APP_API_URL,
+    windowOrigin: window.location.origin,
+    isLocalhost: window.location.origin.includes('localhost')
+  });
+  
   // If environment variable is not set or is placeholder, determine based on current location
   if (!baseUrl || baseUrl.includes('your-backend-name')) {
     if (window.location.origin.includes('localhost')) {
@@ -15,6 +23,8 @@ export const getImageUrl = (imagePath) => {
       baseUrl = 'https://the-library-a11t.onrender.com';
     }
   }
+  
+  console.log('🎯 Final baseUrl:', baseUrl);
   
 
   
