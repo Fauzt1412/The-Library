@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { booksAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
 import { getImageUrl, getPlaceholderImage } from '../utils/imageUtils';
+import ImageTester from '../components/ImageTester';
 
 const Books = () => {
   const [books, setBooks] = useState([]);
@@ -41,6 +42,16 @@ const Books = () => {
       }
       
       console.log('📚 Setting books data:', { count: booksData.length });
+      
+      // Debug: Log first book's image data
+      if (booksData.length > 0) {
+        console.log('📚 First book image data:', {
+          title: booksData[0].title,
+          Coverpage: booksData[0].Coverpage,
+          imageUrl: getImageUrl(booksData[0].Coverpage)
+        });
+      }
+      
       setBooks(booksData);
       setError('');
     } catch (error) {
@@ -93,6 +104,9 @@ const Books = () => {
 
   return (
     <div className="container py-5 fade-in">
+      {/* Temporary Image Tester - Remove after debugging */}
+      <ImageTester />
+      
       <div className="row mb-4">
         <div className="col-12">
           <h1 className="section-title">Our Book Collection</h1>
@@ -164,7 +178,15 @@ const Books = () => {
                     className="card-img-top" 
                     alt={book.title}
                     onError={(e) => {
+                      console.error('🖼️ Image failed to load:', {
+                        originalSrc: e.target.src,
+                        bookTitle: book.title,
+                        coverpage: book.Coverpage
+                      });
                       e.target.src = getPlaceholderImage('book');
+                    }}
+                    onLoad={(e) => {
+                      console.log('🖼️ Image loaded successfully:', e.target.src);
                     }}
                   />
                   <div className="card-body d-flex flex-column">
