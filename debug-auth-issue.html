@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Authentication Issue</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; padding: 20px; }
+        .test-section { border: 2px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .result { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffebee; border-left: 4px solid #f44336; }
+        .success { background: #e8f5e8; border-left: 4px solid #4caf50; }
+        .warning { background: #fff3e0; border-left: 4px solid #ff9800; }
+        input, button { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        .step { background: #e3f2fd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Authentication Issue</h1>
+    
+    <!-- Step 1: Server Health Check -->
+    <div class="test-section">
+        <h2>Step 1: Server Health Check</h2>
+        <button onclick="checkServerHealth()">🏥 Check Server Health</button>
+        <div id="healthResult"></div>
+    </div>
+    
+    <!-- Step 2: Test Login -->
+    <div class="test-section">
+        <h2>Step 2: Test Login</h2>
+        <input type="text" id="username" placeholder="Username" value="admin">
+        <input type="password" id="password" placeholder="Password" value="admin">
+        <button onclick="testLogin()">🔐 Test Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <!-- Step 3: Test Authentication Headers -->
+    <div class="test-section">
+        <h2>Step 3: Test Authentication Headers</h2>
+        <button onclick="testAuthHeaders()" id="authBtn" disabled>🔑 Test Auth Headers</button>
+        <div id="authResult"></div>
+    </div>
+    
+    <!-- Step 4: Test Favorites API -->
+    <div class="test-section">
+        <h2>Step 4: Test Favorites API</h2>
+        <button onclick="testFavoritesAPI()" id="favBtn" disabled>❤️ Test Favorites</button>
+        <div id="favResult"></div>
+    </div>
+    
+    <!-- Step 5: Test User API -->
+    <div class="test-section">
+        <h2>Step 5: Test User API</h2>
+        <button onclick="testUserAPI()" id="userBtn" disabled>👤 Test User Profile</button>
+        <div id="userResult"></div>
+    </div>
+    
+    <script>
+        let currentUser = null;
+        
+        function showResult(elementId, content, type = 'result') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${type}">${content}</div>`;
+        }
+        
+        async function checkServerHealth() {
+            showResult('healthResult', '🔄 Checking server health...', 'warning');
+            
+            try {
+                const response = await fetch('http://localhost:1412/API/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('healthResult', `
+                        <h4>✅ Server is Running!</h4>
+                        <p><strong>Status:</strong> ${data.status}</p>
+                        <p><strong>Endpoints:</strong></p>
+                        <pre>${JSON.stringify(data.endpoints, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    showResult('healthResult', `
+                        <h4>❌ Server Health Check Failed</h4>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                    `, 'error');
+                }
+            } catch (error) {
+                showResult('healthResult', `
+                    <h4>❌ Cannot Connect to Server</h4>
+                    <p>${error.message}</p>
+                    <p>Make sure the server is running on port 1412</p>
+                `, 'error');
+            }
+        }
+        
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            showResult('loginResult', '🔄 Testing login...', 'warning');
+            
+            try {
+                const response = await fetch('http://localhost:1412/API/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.user) {
+                    currentUser = data.user;
+                    
+                    showResult('loginResult', `
+                        <h4>✅ Login Successful!</h4>
+                        <p><strong>User ID:</strong> ${data.user._id}</p>
+                        <p><strong>Username:</strong> ${data.user.username}</p>
+                        <p><strong>Email:</strong> ${data.user.email}</p>
+                        <p><strong>Role:</strong> ${data.user.role}</p>
+                        <p>✅ User data stored for further tests</p>
+                    `, 'success');
+                    
+                    // Enable other test buttons
+                    document.getElementById('authBtn').disabled = false;
+                    document.getElementById('favBtn').disabled = false;
+                    document.getElementById('userBtn').disabled = false;
+                    
+                } else {
+                    showResult('loginResult', `
+                        <h4>❌ Login Failed</h4>
+                        <p><strong>Error:</strong> ${data.error || 'Unknown error'}</p>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'error');
+                }
+            } catch (error) {
+                showResult('loginResult', `
+                    <h4>❌ Login Network Error</h4>
+                    <p>${error.message}</p>
+                `, 'error');
+            }
+        }
+        
+        async function testAuthHeaders() {
+            if (!currentUser) {
+                showResult('authResult', '❌ Please login first!', 'error');
+                return;
+            }
+            
+            showResult('authResult', '🔄 Testing authentication headers...', 'warning');
+            
+            const testRequests = [
+                {
+                    name: 'With x-user-id header',
+                    headers: { 'x-user-id': currentUser._id, 'Content-Type': 'application/json' }
+                },
+                {
+                    name: 'With userId in body',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser._id })
+                },
+                {
+                    name: 'No authentication',
+                    headers: { 'Content-Type': 'application/json' }
+                }
+            ];
+            
+            let results = '<h4>🔑 Authentication Header Tests</h4>';
+            
+            for (let test of testRequests) {
+                try {
+                    const response = await fetch('http://localhost:1412/API/favorites', {
+                        method: 'GET',
+                        headers: test.headers,
+                        body: test.body
+                    });
+                    
+                    const data = await response.json();
+                    const status = response.ok ? '✅' : '❌';
+                    
+                    results += `
+                        <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <strong>${status} ${test.name}</strong><br>
+                            Status: ${response.status}<br>
+                            Response: ${data.error || data.message || 'Success'}<br>
+                        </div>
+                    `;
+                } catch (error) {
+                    results += `
+                        <div style="margin: 10px 0; padding: 10px; border: 1px solid #f44336; border-radius: 4px;">
+                            <strong>❌ ${test.name}</strong><br>
+                            Error: ${error.message}<br>
+                        </div>
+                    `;
+                }
+            }
+            
+            showResult('authResult', results, 'result');
+        }
+        
+        async function testFavoritesAPI() {
+            if (!currentUser) {
+                showResult('favResult', '❌ Please login first!', 'error');
+                return;
+            }
+            
+            showResult('favResult', '🔄 Testing favorites API...', 'warning');
+            
+            try {
+                console.log('🔍 Testing favorites with user ID:', currentUser._id);
+                
+                const response = await fetch('http://localhost:1412/API/favorites', {
+                    method: 'GET',
+                    headers: { 
+                        'x-user-id': currentUser._id,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📡 Favorites response status:', response.status);
+                const data = await response.json();
+                console.log('📄 Favorites response data:', data);
+                
+                if (response.ok) {
+                    showResult('favResult', `
+                        <h4>✅ Favorites API Working!</h4>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Success:</strong> ${data.success}</p>
+                        <p><strong>Count:</strong> ${data.count || 0}</p>
+                        <p><strong>Data:</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    showResult('favResult', `
+                        <h4>❌ Favorites API Failed</h4>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Error:</strong> ${data.error}</p>
+                        <p><strong>Full Response:</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'error');
+                }
+            } catch (error) {
+                showResult('favResult', `
+                    <h4>❌ Favorites API Error</h4>
+                    <p>${error.message}</p>
+                `, 'error');
+            }
+        }
+        
+        async function testUserAPI() {
+            if (!currentUser) {
+                showResult('userResult', '❌ Please login first!', 'error');
+                return;
+            }
+            
+            showResult('userResult', '🔄 Testing user API...', 'warning');
+            
+            try {
+                console.log('🔍 Testing user profile with user ID:', currentUser._id);
+                
+                const response = await fetch('http://localhost:1412/API/user/profile', {
+                    method: 'GET',
+                    headers: { 
+                        'x-user-id': currentUser._id,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📡 User profile response status:', response.status);
+                const data = await response.json();
+                console.log('📄 User profile response data:', data);
+                
+                if (response.ok) {
+                    showResult('userResult', `
+                        <h4>✅ User API Working!</h4>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Success:</strong> ${data.success}</p>
+                        <p><strong>User Data:</strong></p>
+                        <pre>${JSON.stringify(data.user, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    showResult('userResult', `
+                        <h4>❌ User API Failed</h4>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Error:</strong> ${data.error}</p>
+                        <p><strong>Full Response:</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'error');
+                }
+            } catch (error) {
+                showResult('userResult', `
+                    <h4>❌ User API Error</h4>
+                    <p>${error.message}</p>
+                `, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
