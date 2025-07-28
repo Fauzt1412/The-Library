@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { booksAPI, gamesAPI, usersAPI, notificationsAPI, submissionsAPI, editRequestsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import SimpleDragDropUpload from '../components/SimpleDragDropUpload';
 
 const AdminPanel = () => {
   const { user, isAuthenticated, isAdmin } = useAuth();
@@ -880,27 +881,13 @@ const AdminPanel = () => {
               />
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label">Book Cover Image</label>
-              <input
-                type="file"
-                className="form-control"
+              <SimpleDragDropUpload
+                onFileSelect={(file) => setBookForm({...bookForm, coverImage: file})}
+                currentImage={modalType === 'edit' && currentItem?.Coverpage ? currentItem.Coverpage : null}
+                label="Book Cover Image"
                 accept="image/*"
-                onChange={(e) => setBookForm({...bookForm, coverImage: e.target.files[0]})}
+                maxSize={5 * 1024 * 1024}
               />
-              {modalType === 'edit' && currentItem?.Coverpage && (
-                <div className="mt-2">
-                  <small className="text-muted">Current image:</small><br/>
-                  <img 
-                    src={`http://localhost:1412${currentItem.Coverpage}`}
-                    alt="Current cover"
-                    style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'cover' }}
-                    className="border rounded"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                </div>
-              )}
             </div>
           </div>
             <div className="mb-3">
@@ -1035,27 +1022,13 @@ const AdminPanel = () => {
 
           </div>
           <div className="mb-3">
-            <label className="form-label">Game Cover Image</label>
-            <input
-              type="file"
-              className="form-control"
+            <SimpleDragDropUpload
+              onFileSelect={(file) => setGameForm({...gameForm, coverImage: file})}
+              currentImage={modalType === 'edit' && currentItem?.coverImage ? currentItem.coverImage : null}
+              label="Game Cover Image"
               accept="image/*"
-              onChange={(e) => setGameForm({...gameForm, coverImage: e.target.files[0]})}
+              maxSize={5 * 1024 * 1024}
             />
-            {modalType === 'edit' && currentItem?.coverImage && (
-              <div className="mt-2">
-                <small className="text-muted">Current image:</small><br/>
-                <img 
-                  src={`http://localhost:1412${currentItem.coverImage}`}
-                  alt="Current cover"
-                  style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'cover' }}
-                  className="border rounded"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
           </div>
           
           <div className="mb-3">

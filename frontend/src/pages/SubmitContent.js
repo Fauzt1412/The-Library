@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { submissionsAPI } from '../services/api';
+import SimpleDragDropUpload from '../components/SimpleDragDropUpload';
 
 const SubmitContent = () => {
   const { user, isAuthenticated } = useAuth();
@@ -86,6 +87,14 @@ const SubmitContent = () => {
     try {
       const currentForm = activeTab === 'book' ? bookForm : gameForm;
       
+      console.log('📝 Submit Content - Current Form:', {
+        type: activeTab,
+        title: currentForm.title,
+        hasImage: !!currentForm.coverImage,
+        imageType: currentForm.coverImage?.type,
+        imageSize: currentForm.coverImage?.size
+      });
+      
       // Validate required fields
       if (!currentForm.coverImage) {
         setError('Cover image is required');
@@ -106,9 +115,15 @@ const SubmitContent = () => {
         submissionData.platformLinks = gameForm.platformLinks.filter(link => link.name && link.url);
       }
       
-      console.log('Submitting:', submissionData);
+      console.log('📤 Submitting data:', {
+        type: submissionData.type,
+        title: submissionData.title,
+        hasImage: !!submissionData.coverImage,
+        linksCount: activeTab === 'book' ? submissionData.readingLinks.length : submissionData.platformLinks.length
+      });
       
       const response = await submissionsAPI.submit(submissionData);
+      console.log('✅ Submission successful:', response.data);
       
       setSuccess((activeTab === 'book' ? 'Book' : 'Game') + ' submitted successfully! It will be reviewed by an admin before being published. You will receive a notification once the review is complete.');
       
@@ -313,15 +328,12 @@ const SubmitContent = () => {
                     />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Book Cover Image *</label>
-                    <input
-                      type="file"
-                      className="form-control"
+                    <SimpleDragDropUpload
+                      onFileSelect={(file) => setBookForm({...bookForm, coverImage: file})}
+                      label="Book Cover Image *"
                       accept="image/*"
-                      onChange={(e) => setBookForm({...bookForm, coverImage: e.target.files[0]})}
-                      required
+                      maxSize={5 * 1024 * 1024}
                     />
-                    <div className="form-text">Maximum file size: 5MB. Supported formats: JPG, PNG, GIF, WebP</div>
                   </div>
                 </div>
                 
@@ -390,15 +402,12 @@ const SubmitContent = () => {
                 </div>
                 
                 <div className="mb-3">
-                  <label className="form-label">Game Cover Image *</label>
-                  <input
-                    type="file"
-                    className="form-control"
+                  <SimpleDragDropUpload
+                    onFileSelect={(file) => setGameForm({...gameForm, coverImage: file})}
+                    label="Game Cover Image *"
                     accept="image/*"
-                    onChange={(e) => setGameForm({...gameForm, coverImage: e.target.files[0]})}
-                    required
+                    maxSize={5 * 1024 * 1024}
                   />
-                  <div className="form-text">Maximum file size: 5MB. Supported formats: JPG, PNG, GIF, WebP</div>
                 </div>
                 
                 {renderLinkInputs(gameForm.platformLinks, 'game')}

@@ -20,9 +20,19 @@ const SubmitContent = async (req, res) => {
                 originalName: req.file.originalname,
                 filename: req.file.filename,
                 path: submissionData.coverImage,
-                destination: req.file.destination
+                destination: req.file.destination,
+                fileSize: req.file.size
             });
+        } else {
+            console.log('⚠️ No file uploaded in submission');
         }
+        
+        console.log('📝 Submission data before save:', {
+            type: submissionData.type,
+            title: submissionData.title,
+            coverImage: submissionData.coverImage,
+            submittedBy: submissionData.submittedBy
+        });
         
         // Parse links if they exist
         if (req.body.readingLinks) {
