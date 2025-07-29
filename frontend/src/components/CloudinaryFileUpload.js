@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../utils/cloudinaryUtils';
+import { getImageUrl } from '../utils/imageUtils';
 
 const CloudinaryFileUpload = ({ 
   onFileSelect, 
@@ -11,7 +12,7 @@ const CloudinaryFileUpload = ({
   cloudinaryFolder = "library"
 }) => {
   const [dragActive, setDragActive] = useState(false);
-  const [preview, setPreview] = useState(currentImage ? `http://localhost:1412${currentImage}` : null);
+  const [preview, setPreview] = useState(currentImage ? getImageUrl(currentImage) : null);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -24,7 +25,7 @@ const CloudinaryFileUpload = ({
       if (currentImage.startsWith('http')) {
         setPreview(currentImage);
       } else {
-        setPreview(`http://localhost:1412${currentImage}`);
+        setPreview(getImageUrl(currentImage));
       }
     } else {
       setPreview(null);

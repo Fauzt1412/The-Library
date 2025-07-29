@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { booksAPI, gamesAPI, usersAPI, notificationsAPI, submissionsAPI, editRequestsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import FileUpload from '../components/FileUpload';
+import FileUploadWithToggle from '../components/FileUploadWithToggle';
 import { getImageUrl } from '../utils/imageUtils';
 
 const AdminPanel = () => {

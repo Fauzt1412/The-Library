@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { editRequestsAPI } from '../services/api';
-import FileUpload from '../components/FileUpload';
-import { handleImageError } from '../utils/placeholderUtils';
+import { handleImageError, getLocalPlaceholder } from '../utils/placeholderUtils';
+import { getImageUrl } from '../utils/imageUtils';
 
 const MyContent = () => {
   const { user, isAuthenticated } = useAuth();
@@ -298,7 +298,7 @@ const MyContent = () => {
                         <div className="card h-100">
                           <div className="position-relative">
                             <img 
-                              src={`http://localhost:1412${item.contentType === 'book' ? item.Coverpage : item.coverImage}`}
+                              src={getImageUrl(item.contentType === 'book' ? item.Coverpage : item.coverImage, item.contentType)}
                               alt={item.title}
                               className="card-img-top"
                               style={{ height: '200px', objectFit: 'cover' }}

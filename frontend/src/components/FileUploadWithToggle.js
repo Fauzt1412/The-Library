@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../utils/cloudinaryUtils';
+import { getImageUrl } from '../utils/imageUtils';
 import UploadMethodToggle from './UploadMethodToggle';
 
 const FileUploadWithToggle = ({ 
@@ -29,11 +30,7 @@ const FileUploadWithToggle = ({
   useEffect(() => {
     if (currentImage) {
       // Handle different image URL formats
-      if (currentImage.startsWith('http')) {
-        setPreview(currentImage);
-      } else {
-        setPreview(`http://localhost:1412${currentImage}`);
-      }
+      setPreview(getImageUrl(currentImage));
     } else {
       setPreview(null);
     }
