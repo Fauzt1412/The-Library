@@ -13,6 +13,12 @@ const gameSchema = new mongoose.Schema({
         icon: { type: String, default: 'fas fa-external-link-alt' },
         color: { type: String, default: '#667eea' }
     }],
+    cloudinaryData: {
+        publicId: String,
+        cloudinaryUrl: String,
+        uploadMethod: String,
+        folder: String
+    },
     publishedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }

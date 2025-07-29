@@ -28,7 +28,7 @@ const GetBookById = async (req, res) => {
 }
 
 const CreateBook = async (req, res) => {
-    const { title, author, categories, publishedDate, description, readingLinks } = req.body;
+    const { title, author, categories, publishedDate, description, readingLinks, coverImageUrl, cloudinaryData } = req.body;
     
     try {
         console.log('📝 CreateBook - Request data:', {
@@ -41,18 +41,27 @@ const CreateBook = async (req, res) => {
                 path: req.file.path,
                 destination: req.file.destination
             } : null,
-            user: req.user ? req.user._id : null
+            user: req.user ? req.user._id : null,
+            hasCloudinaryData: !!cloudinaryData,
+            coverImageUrl
         });
         
-        // Check if file was uploaded
-        if (!req.file) {
-            console.log('❌ CreateBook - No file uploaded');
+        let finalCoverImageUrl = null;
+        
+        // Check if we have Cloudinary data (JSON request)
+        if (cloudinaryData && coverImageUrl) {
+            console.log('📷 CreateBook - Using Cloudinary image:', coverImageUrl);
+            finalCoverImageUrl = coverImageUrl;
+        }
+        // Check if file was uploaded (FormData request)
+        else if (req.file) {
+            finalCoverImageUrl = `/uploads/books/${req.file.filename}`;
+            console.log('📷 CreateBook - Using uploaded file:', finalCoverImageUrl);
+        }
+        else {
+            console.log('❌ CreateBook - No cover image provided');
             return res.status(400).json({ error: 'Cover image is required' });
         }
-        
-        // Generate the URL for the uploaded image
-        const coverImageUrl = `/uploads/books/${req.file.filename}`;
-        console.log('📷 CreateBook - Cover image URL:', coverImageUrl);
         
         // Parse reading links if they exist
         let parsedReadingLinks = [];
@@ -72,10 +81,15 @@ const CreateBook = async (req, res) => {
             categories, 
             publishedDate, 
             description, 
-            Coverpage: coverImageUrl,
+            Coverpage: finalCoverImageUrl,
             readingLinks: parsedReadingLinks,
             publishedBy: req.user._id
         };
+        
+        // Add Cloudinary metadata if available
+        if (cloudinaryData) {
+            bookData.cloudinaryData = cloudinaryData;
+        }
         
         console.log('💾 CreateBook - Book data to save:', bookData);
         
@@ -94,7 +108,7 @@ const CreateBook = async (req, res) => {
 
 const UpdateBook = async (req, res) => {
     const { id } = req.params;
-    const { title, author, categories, publishedDate, description, readingLinks } = req.body;
+    const { title, author, categories, publishedDate, description, readingLinks, coverImageUrl, cloudinaryData } = req.body;
     
     try {
         console.log('🔄 UpdateBook - Request data:', {
@@ -108,7 +122,9 @@ const UpdateBook = async (req, res) => {
                 path: req.file.path,
                 destination: req.file.destination
             } : null,
-            user: req.user ? req.user._id : null
+            user: req.user ? req.user._id : null,
+            hasCloudinaryData: !!cloudinaryData,
+            coverImageUrl
         });
         
         const existingBook = await book.findById(id);
@@ -144,12 +160,18 @@ const UpdateBook = async (req, res) => {
             updatedAt: new Date()
         };
         
-        // If a new file was uploaded, update the cover image
-        if (req.file) {
+        // Handle cover image update
+        if (cloudinaryData && coverImageUrl) {
+            // Cloudinary upload
+            updateData.Coverpage = coverImageUrl;
+            updateData.cloudinaryData = cloudinaryData;
+            console.log('📷 UpdateBook - New Cloudinary image URL:', coverImageUrl);
+        } else if (req.file) {
+            // Traditional file upload
             updateData.Coverpage = `/uploads/books/${req.file.filename}`;
-            console.log('📷 UpdateBook - New cover image URL:', updateData.Coverpage);
+            console.log('📷 UpdateBook - New uploaded image URL:', updateData.Coverpage);
         } else {
-            console.log('📷 UpdateBook - No new image uploaded, keeping existing');
+            console.log('📷 UpdateBook - No new image provided, keeping existing');
         }
         
         console.log('💾 UpdateBook - Update data:', updateData);

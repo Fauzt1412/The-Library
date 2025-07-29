@@ -28,16 +28,40 @@ const GetGameById = async (req, res) => {
 }
 
 const CreateGame = async (req, res) => {
-    const { title, genre, developer, platform, releaseDate, description, platformLinks } = req.body;
+    const { title, genre, developer, platform, releaseDate, description, platformLinks, coverImageUrl, cloudinaryData } = req.body;
     
     try {
-        // Check if file was uploaded
-        if (!req.file) {
+        console.log('🎮 CreateGame - Request data:', {
+            body: req.body,
+            file: req.file ? {
+                filename: req.file.filename,
+                originalname: req.file.originalname,
+                mimetype: req.file.mimetype,
+                size: req.file.size,
+                path: req.file.path,
+                destination: req.file.destination
+            } : null,
+            user: req.user ? req.user._id : null,
+            hasCloudinaryData: !!cloudinaryData,
+            coverImageUrl
+        });
+        
+        let finalCoverImageUrl = null;
+        
+        // Check if we have Cloudinary data (JSON request)
+        if (cloudinaryData && coverImageUrl) {
+            console.log('📷 CreateGame - Using Cloudinary image:', coverImageUrl);
+            finalCoverImageUrl = coverImageUrl;
+        }
+        // Check if file was uploaded (FormData request)
+        else if (req.file) {
+            finalCoverImageUrl = `/uploads/games/${req.file.filename}`;
+            console.log('📷 CreateGame - Using uploaded file:', finalCoverImageUrl);
+        }
+        else {
+            console.log('❌ CreateGame - No cover image provided');
             return res.status(400).json({ error: 'Cover image is required' });
         }
-        
-        // Generate the URL for the uploaded image
-        const coverImageUrl = `/uploads/games/${req.file.filename}`;
         
         // Parse platform links if they exist
         let parsedPlatformLinks = [];
@@ -51,32 +75,59 @@ const CreateGame = async (req, res) => {
             }
         }
         
-        const newGame = new game({ 
+        const gameData = { 
             title, 
             genre, 
             developer, 
             platform, 
             releaseDate, 
             description, 
-            coverImage: coverImageUrl, // Use the uploaded file path
+            coverImage: finalCoverImageUrl,
             platformLinks: parsedPlatformLinks,
             publishedBy: req.user._id
-        });
+        };
         
+        // Add Cloudinary metadata if available
+        if (cloudinaryData) {
+            gameData.cloudinaryData = cloudinaryData;
+        }
+        
+        console.log('💾 CreateGame - Game data to save:', gameData);
+        
+        const newGame = new game(gameData);
         await newGame.save();
+        
+        console.log('✅ CreateGame - Game saved successfully:', newGame._id);
+        
         const populatedGame = await game.findById(newGame._id).populate('publishedBy', 'username email');
         res.status(201).json({ message: 'Game published successfully', game: populatedGame });
     } catch (error) {
-        console.error('Error publishing game:', error);
+        console.error('❌ CreateGame - Error:', error);
         res.status(500).json({ error: 'Error publishing game' });
     }
 }
 
 const UpdateGame = async (req, res) => {
     const { id } = req.params;
-    const { title, genre, developer, platform, releaseDate, description, platformLinks } = req.body;
+    const { title, genre, developer, platform, releaseDate, description, platformLinks, coverImageUrl, cloudinaryData } = req.body;
     
     try {
+        console.log('🔄 UpdateGame - Request data:', {
+            id,
+            body: req.body,
+            file: req.file ? {
+                filename: req.file.filename,
+                originalname: req.file.originalname,
+                mimetype: req.file.mimetype,
+                size: req.file.size,
+                path: req.file.path,
+                destination: req.file.destination
+            } : null,
+            user: req.user ? req.user._id : null,
+            hasCloudinaryData: !!cloudinaryData,
+            coverImageUrl
+        });
+        
         const existingGame = await game.findById(id);
         if (!existingGame) {
             return res.status(404).json({ error: 'Game not found' });
@@ -111,18 +162,29 @@ const UpdateGame = async (req, res) => {
             updatedAt: new Date()
         };
         
-        // If a new file was uploaded, update the cover image
-        if (req.file) {
+        // Handle cover image update
+        if (cloudinaryData && coverImageUrl) {
+            // Cloudinary upload
+            updateData.coverImage = coverImageUrl;
+            updateData.cloudinaryData = cloudinaryData;
+            console.log('📷 UpdateGame - New Cloudinary image URL:', coverImageUrl);
+        } else if (req.file) {
+            // Traditional file upload
             updateData.coverImage = `/uploads/games/${req.file.filename}`;
-            
-            // TODO: Delete old image file (optional)
-            // You might want to implement file cleanup here
+            console.log('📷 UpdateGame - New uploaded image URL:', updateData.coverImage);
+        } else {
+            console.log('📷 UpdateGame - No new image provided, keeping existing');
         }
         
+        console.log('💾 UpdateGame - Update data:', updateData);
+        
         const updatedGame = await game.findByIdAndUpdate(id, updateData, { new: true }).populate('publishedBy', 'username email');
+        
+        console.log('✅ UpdateGame - Game updated successfully:', updatedGame._id);
+        
         res.status(200).json({ message: 'Game updated successfully', game: updatedGame });
     } catch (error) {
-        console.error('Error updating game:', error);
+        console.error('❌ UpdateGame - Error:', error);
         res.status(500).json({ error: 'Error updating game' });
     }
 }
