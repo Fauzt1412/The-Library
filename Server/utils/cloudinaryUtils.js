@@ -1,12 +1,22 @@
 // Cloudinary utilities for backend image management
-const cloudinary = require('cloudinary').v2;
+let cloudinary;
+try {
+  cloudinary = require('cloudinary').v2;
+  console.log('✅ Cloudinary module loaded successfully');
+} catch (error) {
+  console.log('⚠️ Cloudinary module not found. Image deletion will be skipped.');
+  console.log('💡 Run: cd Server && npm install cloudinary');
+  cloudinary = null;
+}
 
 // Configure Cloudinary (you'll need to add these to your .env file)
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+if (cloudinary) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+}
 
 // Extract public ID from Cloudinary URL
 const extractPublicId = (cloudinaryUrl) => {
@@ -35,6 +45,11 @@ const extractPublicId = (cloudinaryUrl) => {
 // Delete image from Cloudinary
 const deleteFromCloudinary = async (publicId) => {
   try {
+    if (!cloudinary) {
+      console.log('⚠️ Cloudinary not available. Skipping image deletion.');
+      return { success: false, error: 'Cloudinary module not installed' };
+    }
+    
     if (!publicId) {
       console.log('⚠️ No public ID provided for Cloudinary deletion');
       return { success: false, error: 'No public ID provided' };
