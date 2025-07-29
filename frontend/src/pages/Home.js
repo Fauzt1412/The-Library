@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { booksAPI, gamesAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
 import { handleImageError, getLocalPlaceholder } from '../utils/placeholderUtils';
+import { getImageUrl } from '../utils/imageUtils';
 
 const Home = () => {
   const [featuredBooks, setFeaturedBooks] = useState([]);
@@ -129,7 +130,7 @@ const Home = () => {
                 <div key={book._id} className="col-md-4 mb-4">
                   <div className="card h-100">
                     <img 
-                      src={book.Coverpage ? `http://localhost:1412${book.Coverpage}` : getLocalPlaceholder('book')} 
+                      src={getImageUrl(book.Coverpage, 'book')} 
                       className="card-img-top" 
                       alt={book.title}
                       onError={(e) => handleImageError(e, 'book')}
@@ -180,7 +181,7 @@ const Home = () => {
                 <div key={game._id} className="col-md-4 mb-4">
                   <div className="card h-100">
                     <img 
-                      src={game.coverImage ? `http://localhost:1412${game.coverImage}` : getLocalPlaceholder('game')} 
+                      src={getImageUrl(game.coverImage, 'game')} 
                       className="card-img-top" 
                       alt={game.title}
                       onError={(e) => handleImageError(e, 'game')}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { gamesAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
 import { handleImageError, getLocalPlaceholder } from '../utils/placeholderUtils';
+import { getImageUrl } from '../utils/imageUtils';
 
 const Games = () => {
   const [games, setGames] = useState([]);
@@ -177,7 +178,7 @@ const Games = () => {
               <div key={game._id} className="col-lg-3 col-md-4 col-sm-6 mb-4">
                 <div className="card h-100">
                   <img 
-                    src={game.coverImage ? `http://localhost:1412${game.coverImage}` : getLocalPlaceholder('game')} 
+                    src={getImageUrl(game.coverImage, 'game')} 
                     className="card-img-top" 
                     alt={game.title}
                     onError={(e) => handleImageError(e, 'game')}

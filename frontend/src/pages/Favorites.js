@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
 import { handleImageError, getLocalPlaceholder } from '../utils/placeholderUtils';
+import { getImageUrl } from '../utils/imageUtils';
 
 const Favorites = () => {
   const { user, isAuthenticated } = useAuth();
@@ -168,8 +169,8 @@ const Favorites = () => {
                       <img 
                         src={
                           favorite.type === 'book' 
-                            ? (favorite.data.Coverpage ? `http://localhost:1412${favorite.data.Coverpage}` : getLocalPlaceholder('book'))
-                            : (favorite.data.coverImage ? `http://localhost:1412${favorite.data.coverImage}` : getLocalPlaceholder('game'))
+                            ? getImageUrl(favorite.data.Coverpage, 'book')
+                            : getImageUrl(favorite.data.coverImage, 'game')
                         }
                         className="card-img-top" 
                         alt={favorite.data.title}

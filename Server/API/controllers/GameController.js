@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const game = require('../models/games');
+const { deleteImage } = require('../../utils/cloudinaryUtils');
 
 const GetAllGames = async (req, res) => {
     try {
@@ -139,9 +140,22 @@ const DeleteGame = async (req, res) => {
             return res.status(403).json({ error: 'You can only delete your own games' });
         }
         
+        // Delete cover image from Cloudinary if it exists
+        if (gameToDelete.coverImage) {
+            console.log('🗑️ Attempting to delete game cover image:', gameToDelete.coverImage);
+            const deleteResult = await deleteImage(gameToDelete.coverImage);
+            if (deleteResult.success) {
+                console.log('✅ Successfully deleted game cover image');
+            } else {
+                console.log('⚠️ Failed to delete game cover image:', deleteResult.error);
+                // Don't fail the deletion if image deletion fails
+            }
+        }
+        
         await game.findByIdAndDelete(id);
-        res.status(200).json({ message: 'Game deleted successfully' });
+        res.status(200).json({ message: 'Game deleted successfully and image cleaned up' });
     } catch (error) {
+        console.error('Error deleting game:', error);
         res.status(500).json({ error: 'Error deleting game' });
     }
 }

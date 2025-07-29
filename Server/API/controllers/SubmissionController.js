@@ -2,6 +2,7 @@ const Submission = require('../models/submissions');
 const Book = require('../models/books');
 const Game = require('../models/games');
 const { notifyAdmins, createNotification } = require('./NotificationController');
+const { deleteImage } = require('../../utils/cloudinaryUtils');
 
 // Submit content for review
 const SubmitContent = async (req, res) => {
@@ -251,6 +252,18 @@ const RejectSubmission = async (req, res) => {
             return res.status(400).json({ error: 'Submission has already been reviewed' });
         }
         
+        // Delete Cloudinary image if it exists
+        if (submission.coverImage) {
+            console.log('🗑️ Attempting to delete cover image for rejected submission:', submission.coverImage);
+            const deleteResult = await deleteImage(submission.coverImage);
+            if (deleteResult.success) {
+                console.log('✅ Successfully deleted cover image from Cloudinary');
+            } else {
+                console.log('⚠️ Failed to delete cover image:', deleteResult.error);
+                // Don't fail the rejection if image deletion fails
+            }
+        }
+        
         // Update submission status
         submission.status = 'rejected';
         submission.reviewedBy = req.user._id;
@@ -269,7 +282,7 @@ const RejectSubmission = async (req, res) => {
         );
         
         res.status(200).json({ 
-            message: 'Submission rejected',
+            message: 'Submission rejected and image cleaned up',
             submission
         });
     } catch (error) {

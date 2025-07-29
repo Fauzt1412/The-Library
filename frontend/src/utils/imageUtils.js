@@ -1,16 +1,16 @@
 // Utility function to get the correct image URL
-export const getImageUrl = (imagePath) => {
+export const getImageUrl = (imagePath, placeholderType = 'book') => {
   if (!imagePath) {
-    return getPlaceholderImage('book');
+    return getPlaceholderImage(placeholderType);
   }
   
-  // Simple, reliable approach - use localhost for development
-  const baseUrl = 'http://localhost:1412';
-  
-  // If the imagePath already includes the full URL, return as is
-  if (imagePath.startsWith('http')) {
+  // If the imagePath already includes the full URL (http/https), return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
     return imagePath;
   }
+  
+  // For local paths, use localhost for development
+  const baseUrl = 'http://localhost:1412';
   
   // If the imagePath starts with '/', prepend the base URL
   if (imagePath.startsWith('/')) {

@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const book = require('../models/books');
+const { deleteImage } = require('../../utils/cloudinaryUtils');
 
 const GetAllBooks = async (req, res) => {
     try {
@@ -177,9 +178,22 @@ const DeleteBook = async (req, res) => {
             return res.status(403).json({ error: 'You can only delete your own books' });
         }
         
+        // Delete cover image from Cloudinary if it exists
+        if (bookToDelete.Coverpage) {
+            console.log('🗑️ Attempting to delete book cover image:', bookToDelete.Coverpage);
+            const deleteResult = await deleteImage(bookToDelete.Coverpage);
+            if (deleteResult.success) {
+                console.log('✅ Successfully deleted book cover image');
+            } else {
+                console.log('⚠️ Failed to delete book cover image:', deleteResult.error);
+                // Don't fail the deletion if image deletion fails
+            }
+        }
+        
         await book.findByIdAndDelete(id);
-        res.status(200).json({ message: 'Book deleted successfully' });
+        res.status(200).json({ message: 'Book deleted successfully and image cleaned up' });
     } catch (error) {
+        console.error('Error deleting book:', error);
         res.status(500).json({ error: 'Error deleting book' });
     }
 }
