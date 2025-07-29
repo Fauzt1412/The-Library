@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { editRequestsAPI } from '../services/api';
 import { handleImageError, getLocalPlaceholder } from '../utils/placeholderUtils';
 import { getImageUrl } from '../utils/imageUtils';
+import FileUploadWithToggle from '../components/FileUploadWithToggle';
 
 const MyContent = () => {
   const { user, isAuthenticated } = useAuth();
@@ -488,12 +489,26 @@ const MyContent = () => {
                           />
                         </div>
                         <div className="col-md-6 mb-3">
-                          <FileUpload
-                            onFileSelect={(file) => setEditForm({...editForm, coverImage: file})}
+                          <FileUploadWithToggle
+                            onFileSelect={(result) => {
+                              console.log('MyContent Book FileUpload result:', result);
+                              // Handle both upload methods
+                              if (result && result.uploadMethod === 'cloudinary') {
+                                console.log('Setting Cloudinary data:', result.cloudinaryUrl);
+                                setEditForm({...editForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
+                              } else if (result && result.uploadMethod === 'local') {
+                                console.log('Setting local file:', result.file);
+                                setEditForm({...editForm, coverImage: result.file});
+                              } else {
+                                setEditForm({...editForm, coverImage: result});
+                              }
+                            }}
                             currentImage={selectedContent?.Coverpage}
                             label="Book Cover Image (optional)"
                             accept="image/*"
                             maxSize={5 * 1024 * 1024}
+                            cloudinaryFolder="books"
+                            defaultMethod="cloudinary"
                           />
                         </div>
                       </div>
@@ -614,12 +629,26 @@ const MyContent = () => {
                       </div>
                       
                       <div className="mb-3">
-                        <FileUpload
-                          onFileSelect={(file) => setEditForm({...editForm, coverImage: file})}
+                        <FileUploadWithToggle
+                          onFileSelect={(result) => {
+                            console.log('MyContent Game FileUpload result:', result);
+                            // Handle both upload methods
+                            if (result && result.uploadMethod === 'cloudinary') {
+                              console.log('Setting Cloudinary data:', result.cloudinaryUrl);
+                              setEditForm({...editForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
+                            } else if (result && result.uploadMethod === 'local') {
+                              console.log('Setting local file:', result.file);
+                              setEditForm({...editForm, coverImage: result.file});
+                            } else {
+                              setEditForm({...editForm, coverImage: result});
+                            }
+                          }}
                           currentImage={selectedContent?.coverImage}
                           label="Game Cover Image (optional)"
                           accept="image/*"
                           maxSize={5 * 1024 * 1024}
+                          cloudinaryFolder="games"
+                          defaultMethod="cloudinary"
                         />
                       </div>
                       
