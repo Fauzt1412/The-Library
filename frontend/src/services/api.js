@@ -104,27 +104,57 @@ export const booksAPI = {
       throw new Error('User not authenticated');
     }
     
-    const formData = new FormData();
-    formData.append('userId', currentUser._id);
-    formData.append('title', bookData.title);
-    formData.append('author', bookData.author);
-    formData.append('categories', bookData.categories);
-    formData.append('description', bookData.description);
-    formData.append('publishedDate', bookData.publishedDate);
-    
-    if (bookData.coverImage) {
-      formData.append('coverImage', bookData.coverImage);
-    }
-    
-    if (bookData.readingLinks) {
-      formData.append('readingLinks', JSON.stringify(bookData.readingLinks));
-    }
-    
-    return api.post('/books', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    console.log('📚 booksAPI.create - Input data:', {
+      coverImageType: typeof bookData.coverImage,
+      hasCloudinaryData: !!bookData.cloudinaryData,
+      cloudinaryData: bookData.cloudinaryData
     });
+    
+    // Check if we have Cloudinary data or traditional file upload
+    const hasCloudinaryData = bookData.cloudinaryData && bookData.cloudinaryData.publicId;
+    const hasFileUpload = bookData.coverImage instanceof File;
+    
+    console.log('📚 Upload type:', { hasCloudinaryData, hasFileUpload });
+    
+    if (hasCloudinaryData) {
+      // For Cloudinary uploads, use JSON
+      console.log('📚 Using JSON for Cloudinary book creation');
+      return api.post('/books', {
+        userId: currentUser._id,
+        title: bookData.title,
+        author: bookData.author,
+        categories: bookData.categories,
+        description: bookData.description,
+        publishedDate: bookData.publishedDate,
+        coverImageUrl: bookData.coverImage, // Cloudinary URL
+        cloudinaryData: bookData.cloudinaryData,
+        readingLinks: bookData.readingLinks || []
+      });
+    } else {
+      // For traditional file uploads, use FormData
+      console.log('📚 Using FormData for traditional book creation');
+      const formData = new FormData();
+      formData.append('userId', currentUser._id);
+      formData.append('title', bookData.title);
+      formData.append('author', bookData.author);
+      formData.append('categories', bookData.categories);
+      formData.append('description', bookData.description);
+      formData.append('publishedDate', bookData.publishedDate);
+      
+      if (bookData.coverImage) {
+        formData.append('coverImage', bookData.coverImage);
+      }
+      
+      if (bookData.readingLinks) {
+        formData.append('readingLinks', JSON.stringify(bookData.readingLinks));
+      }
+      
+      return api.post('/books', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    }
   },
   update: (id, bookData) => {
     const currentUser = getCurrentUser();
@@ -132,27 +162,58 @@ export const booksAPI = {
       throw new Error('User not authenticated');
     }
     
-    const formData = new FormData();
-    formData.append('userId', currentUser._id);
-    formData.append('title', bookData.title);
-    formData.append('author', bookData.author);
-    formData.append('categories', bookData.categories);
-    formData.append('description', bookData.description);
-    formData.append('publishedDate', bookData.publishedDate);
-    
-    if (bookData.coverImage) {
-      formData.append('coverImage', bookData.coverImage);
-    }
-    
-    if (bookData.readingLinks) {
-      formData.append('readingLinks', JSON.stringify(bookData.readingLinks));
-    }
-    
-    return api.put(`/books/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    console.log('📚 booksAPI.update - Input data:', {
+      id,
+      coverImageType: typeof bookData.coverImage,
+      hasCloudinaryData: !!bookData.cloudinaryData,
+      cloudinaryData: bookData.cloudinaryData
     });
+    
+    // Check if we have Cloudinary data or traditional file upload
+    const hasCloudinaryData = bookData.cloudinaryData && bookData.cloudinaryData.publicId;
+    const hasFileUpload = bookData.coverImage instanceof File;
+    
+    console.log('📚 Update type:', { hasCloudinaryData, hasFileUpload });
+    
+    if (hasCloudinaryData) {
+      // For Cloudinary uploads, use JSON
+      console.log('📚 Using JSON for Cloudinary book update');
+      return api.put(`/books/${id}`, {
+        userId: currentUser._id,
+        title: bookData.title,
+        author: bookData.author,
+        categories: bookData.categories,
+        description: bookData.description,
+        publishedDate: bookData.publishedDate,
+        coverImageUrl: bookData.coverImage, // Cloudinary URL
+        cloudinaryData: bookData.cloudinaryData,
+        readingLinks: bookData.readingLinks || []
+      });
+    } else {
+      // For traditional file uploads, use FormData
+      console.log('📚 Using FormData for traditional book update');
+      const formData = new FormData();
+      formData.append('userId', currentUser._id);
+      formData.append('title', bookData.title);
+      formData.append('author', bookData.author);
+      formData.append('categories', bookData.categories);
+      formData.append('description', bookData.description);
+      formData.append('publishedDate', bookData.publishedDate);
+      
+      if (bookData.coverImage) {
+        formData.append('coverImage', bookData.coverImage);
+      }
+      
+      if (bookData.readingLinks) {
+        formData.append('readingLinks', JSON.stringify(bookData.readingLinks));
+      }
+      
+      return api.put(`/books/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    }
   },
   delete: (id) => {
     const currentUser = getCurrentUser();
@@ -177,28 +238,59 @@ export const gamesAPI = {
       throw new Error('User not authenticated');
     }
     
-    const formData = new FormData();
-    formData.append('userId', currentUser._id);
-    formData.append('title', gameData.title);
-    formData.append('developer', gameData.developer);
-    formData.append('genre', gameData.genre);
-    formData.append('platform', gameData.platform);
-    formData.append('description', gameData.description);
-    formData.append('releaseDate', gameData.releaseDate);
-    
-    if (gameData.coverImage) {
-      formData.append('coverImage', gameData.coverImage);
-    }
-    
-    if (gameData.platformLinks) {
-      formData.append('platformLinks', JSON.stringify(gameData.platformLinks));
-    }
-    
-    return api.post('/games', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    console.log('🎮 gamesAPI.create - Input data:', {
+      coverImageType: typeof gameData.coverImage,
+      hasCloudinaryData: !!gameData.cloudinaryData,
+      cloudinaryData: gameData.cloudinaryData
     });
+    
+    // Check if we have Cloudinary data or traditional file upload
+    const hasCloudinaryData = gameData.cloudinaryData && gameData.cloudinaryData.publicId;
+    const hasFileUpload = gameData.coverImage instanceof File;
+    
+    console.log('🎮 Upload type:', { hasCloudinaryData, hasFileUpload });
+    
+    if (hasCloudinaryData) {
+      // For Cloudinary uploads, use JSON
+      console.log('🎮 Using JSON for Cloudinary game creation');
+      return api.post('/games', {
+        userId: currentUser._id,
+        title: gameData.title,
+        developer: gameData.developer,
+        genre: gameData.genre,
+        platform: gameData.platform,
+        description: gameData.description,
+        releaseDate: gameData.releaseDate,
+        coverImageUrl: gameData.coverImage, // Cloudinary URL
+        cloudinaryData: gameData.cloudinaryData,
+        platformLinks: gameData.platformLinks || []
+      });
+    } else {
+      // For traditional file uploads, use FormData
+      console.log('🎮 Using FormData for traditional game creation');
+      const formData = new FormData();
+      formData.append('userId', currentUser._id);
+      formData.append('title', gameData.title);
+      formData.append('developer', gameData.developer);
+      formData.append('genre', gameData.genre);
+      formData.append('platform', gameData.platform);
+      formData.append('description', gameData.description);
+      formData.append('releaseDate', gameData.releaseDate);
+      
+      if (gameData.coverImage) {
+        formData.append('coverImage', gameData.coverImage);
+      }
+      
+      if (gameData.platformLinks) {
+        formData.append('platformLinks', JSON.stringify(gameData.platformLinks));
+      }
+      
+      return api.post('/games', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    }
   },
   update: (id, gameData) => {
     const currentUser = getCurrentUser();
@@ -206,28 +298,60 @@ export const gamesAPI = {
       throw new Error('User not authenticated');
     }
     
-    const formData = new FormData();
-    formData.append('userId', currentUser._id);
-    formData.append('title', gameData.title);
-    formData.append('developer', gameData.developer);
-    formData.append('genre', gameData.genre);
-    formData.append('platform', gameData.platform);
-    formData.append('description', gameData.description);
-    formData.append('releaseDate', gameData.releaseDate);
-    
-    if (gameData.coverImage) {
-      formData.append('coverImage', gameData.coverImage);
-    }
-    
-    if (gameData.platformLinks) {
-      formData.append('platformLinks', JSON.stringify(gameData.platformLinks));
-    }
-    
-    return api.put(`/games/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    console.log('🎮 gamesAPI.update - Input data:', {
+      id,
+      coverImageType: typeof gameData.coverImage,
+      hasCloudinaryData: !!gameData.cloudinaryData,
+      cloudinaryData: gameData.cloudinaryData
     });
+    
+    // Check if we have Cloudinary data or traditional file upload
+    const hasCloudinaryData = gameData.cloudinaryData && gameData.cloudinaryData.publicId;
+    const hasFileUpload = gameData.coverImage instanceof File;
+    
+    console.log('🎮 Update type:', { hasCloudinaryData, hasFileUpload });
+    
+    if (hasCloudinaryData) {
+      // For Cloudinary uploads, use JSON
+      console.log('🎮 Using JSON for Cloudinary game update');
+      return api.put(`/games/${id}`, {
+        userId: currentUser._id,
+        title: gameData.title,
+        developer: gameData.developer,
+        genre: gameData.genre,
+        platform: gameData.platform,
+        description: gameData.description,
+        releaseDate: gameData.releaseDate,
+        coverImageUrl: gameData.coverImage, // Cloudinary URL
+        cloudinaryData: gameData.cloudinaryData,
+        platformLinks: gameData.platformLinks || []
+      });
+    } else {
+      // For traditional file uploads, use FormData
+      console.log('🎮 Using FormData for traditional game update');
+      const formData = new FormData();
+      formData.append('userId', currentUser._id);
+      formData.append('title', gameData.title);
+      formData.append('developer', gameData.developer);
+      formData.append('genre', gameData.genre);
+      formData.append('platform', gameData.platform);
+      formData.append('description', gameData.description);
+      formData.append('releaseDate', gameData.releaseDate);
+      
+      if (gameData.coverImage) {
+        formData.append('coverImage', gameData.coverImage);
+      }
+      
+      if (gameData.platformLinks) {
+        formData.append('platformLinks', JSON.stringify(gameData.platformLinks));
+      }
+      
+      return api.put(`/games/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    }
   },
   delete: (id) => {
     const currentUser = getCurrentUser();

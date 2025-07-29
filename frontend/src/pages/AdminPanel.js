@@ -48,6 +48,7 @@ const AdminPanel = () => {
     description: '',
     publishedDate: '',
     coverImage: null,
+    cloudinaryData: null,
     readingLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
   });
 
@@ -59,6 +60,7 @@ const AdminPanel = () => {
     releaseDate: '',
     description: '',
     coverImage: null,
+    cloudinaryData: null,
     platformLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
   });
 
@@ -310,6 +312,7 @@ const AdminPanel = () => {
         description: item.description || '',
         publishedDate: item.publishedDate ? item.publishedDate.split('T')[0] : '',
         coverImage: null,
+        cloudinaryData: null,
         readingLinks: item.readingLinks && item.readingLinks.length > 0 ? item.readingLinks : [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
       });
     } else if (activeTab === 'games') {
@@ -321,6 +324,7 @@ const AdminPanel = () => {
         releaseDate: item.releaseDate ? item.releaseDate.split('T')[0] : '',
         description: item.description || '',
         coverImage: null,
+        cloudinaryData: null,
         platformLinks: item.platformLinks && item.platformLinks.length > 0 ? item.platformLinks : [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
       });
     } else if (activeTab === 'users') {
@@ -360,18 +364,37 @@ const AdminPanel = () => {
     try {
       let response;
       if (activeTab === 'books') {
+        console.log('📚 Admin Panel - Submitting book form:', {
+          modalType,
+          formData: bookForm,
+          coverImageType: typeof bookForm.coverImage,
+          hasCloudinaryData: !!bookForm.cloudinaryData
+        });
+        
         if (modalType === 'add') {
           response = await booksAPI.create(bookForm);
         } else {
           response = await booksAPI.update(currentItem._id, bookForm);
         }
       } else if (activeTab === 'games') {
+        console.log('🎮 Admin Panel - Submitting game form:', {
+          modalType,
+          formData: gameForm,
+          coverImageType: typeof gameForm.coverImage,
+          hasCloudinaryData: !!gameForm.cloudinaryData
+        });
+        
         if (modalType === 'add') {
           response = await gamesAPI.create(gameForm);
         } else {
           response = await gamesAPI.update(currentItem._id, gameForm);
         }
       } else if (activeTab === 'users') {
+        console.log('👤 Admin Panel - Submitting user form:', {
+          modalType,
+          formData: userForm
+        });
+        
         if (modalType === 'add') {
           response = await usersAPI.create(userForm);
         } else {
@@ -379,13 +402,19 @@ const AdminPanel = () => {
         }
       }
 
+      console.log('✅ Admin Panel - API Response:', response);
       setSuccess(`Item ${modalType === 'add' ? 'created' : 'updated'} successfully`);
       setShowModal(false);
       fetchData();
       resetForms();
     } catch (error) {
-      setError(`Failed to ${modalType} item`);
-      console.error(`Error ${modalType}ing item:`, error);
+      console.error(`❌ Admin Panel - Error ${modalType}ing item:`, {
+        error,
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      setError(`Failed to ${modalType} item: ${error.response?.data?.error || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -666,6 +695,7 @@ const AdminPanel = () => {
       description: '',
       publishedDate: '',
       coverImage: null,
+      cloudinaryData: null,
       readingLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
     });
     setGameForm({
@@ -676,6 +706,7 @@ const AdminPanel = () => {
       releaseDate: '',
       description: '',
       coverImage: null,
+      cloudinaryData: null,
       platformLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
     });
     setUserForm({
