@@ -28,6 +28,7 @@ import './styles/App.css';
 import './styles/theme.css';
 import './styles/sidebar.css';
 import './styles/floating-menu.css';
+import './styles/UploadToggle.css';
 
 function App() {
   return (

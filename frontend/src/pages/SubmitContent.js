@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { submissionsAPI } from '../services/api';
-import FileUpload from '../components/FileUpload';
+import FileUploadWithToggle from '../components/FileUploadWithToggle';
 
 const SubmitContent = () => {
   const { user, isAuthenticated } = useAuth();
@@ -92,7 +92,7 @@ const SubmitContent = () => {
       console.log('Cover image value:', currentForm.coverImage);
       console.log('Cover image type:', typeof currentForm.coverImage);
       
-      // Validate coverImage - handle both Cloudinary objects and File objects
+      // Validate coverImage - handle both Cloudinary URLs and File objects
       if (!currentForm.coverImage) {
         console.log('Validation failed: coverImage is falsy');
         setError('Cover image is required');
@@ -100,9 +100,9 @@ const SubmitContent = () => {
         return;
       }
       
-      // Check if it's a Cloudinary object with URL
-      if (currentForm.coverImage.type === 'cloudinary' && !currentForm.coverImage.cloudinaryUrl) {
-        console.log('Validation failed: Cloudinary object missing URL');
+      // Check if it's a Cloudinary URL (string)
+      if (typeof currentForm.coverImage === 'string' && currentForm.coverImage.length === 0) {
+        console.log('Validation failed: Cloudinary URL is empty');
         setError('Cover image upload failed. Please try again.');
         setLoading(false);
         return;
@@ -353,18 +353,25 @@ const SubmitContent = () => {
                     />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <FileUpload
+                    <FileUploadWithToggle
                       onFileSelect={(result) => {
                         console.log('Book FileUpload result:', result);
-                        // Store the complete result object (either Cloudinary data or File)
-                        console.log('Setting coverImage to:', result);
-                        setBookForm({...bookForm, coverImage: result});
+                        // Handle both upload methods
+                        if (result && result.uploadMethod === 'cloudinary') {
+                          console.log('Setting Cloudinary data:', result.cloudinaryUrl);
+                          setBookForm({...bookForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
+                        } else if (result && result.uploadMethod === 'local') {
+                          console.log('Setting local file:', result.file);
+                          setBookForm({...bookForm, coverImage: result.file});
+                        } else {
+                          setBookForm({...bookForm, coverImage: result});
+                        }
                       }}
                       label="Book Cover Image *"
                       accept="image/*"
                       maxSize={5 * 1024 * 1024}
-                      enableCloudinary={true}
                       cloudinaryFolder="books"
+                      defaultMethod="cloudinary"
                     />
                   </div>
                 </div>
@@ -434,18 +441,25 @@ const SubmitContent = () => {
                 </div>
                 
                 <div className="mb-3">
-                  <FileUpload
+                  <FileUploadWithToggle
                     onFileSelect={(result) => {
                       console.log('Game FileUpload result:', result);
-                      // Store the complete result object (either Cloudinary data or File)
-                      console.log('Setting coverImage to:', result);
-                      setGameForm({...gameForm, coverImage: result});
+                      // Handle both upload methods
+                      if (result && result.uploadMethod === 'cloudinary') {
+                        console.log('Setting Cloudinary data:', result.cloudinaryUrl);
+                        setGameForm({...gameForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
+                      } else if (result && result.uploadMethod === 'local') {
+                        console.log('Setting local file:', result.file);
+                        setGameForm({...gameForm, coverImage: result.file});
+                      } else {
+                        setGameForm({...gameForm, coverImage: result});
+                      }
                     }}
                     label="Game Cover Image *"
                     accept="image/*"
                     maxSize={5 * 1024 * 1024}
-                    enableCloudinary={true}
                     cloudinaryFolder="games"
+                    defaultMethod="cloudinary"
                   />
                 </div>
                 
