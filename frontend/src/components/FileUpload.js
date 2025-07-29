@@ -148,12 +148,8 @@ const FileUpload = ({
           throw new Error(blobResult.error);
         }
       } else {
-        // Traditional file upload
-        onFileSelect({
-          file: file,
-          type: 'traditional',
-          preview: preview
-        });
+        // Traditional file upload - return just the file for backward compatibility
+        onFileSelect(file);
       }
     } catch (error) {
       setError('Upload failed: ' + error.message);

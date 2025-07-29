@@ -490,7 +490,11 @@ const MyContent = () => {
                         </div>
                         <div className="col-md-6 mb-3">
                           <FileUpload
-                            onFileSelect={(file) => setEditForm({...editForm, coverImage: file})}
+                            onFileSelect={(result) => {
+                              // Handle both old format (File) and new format (object)
+                              const file = result && typeof result === 'object' && result.file ? result.file : result;
+                              setEditForm({...editForm, coverImage: file});
+                            }}
                             currentImage={selectedContent?.Coverpage}
                             label="Book Cover Image (optional)"
                             accept="image/*"
@@ -616,7 +620,11 @@ const MyContent = () => {
                       
                       <div className="mb-3">
                         <FileUpload
-                          onFileSelect={(file) => setEditForm({...editForm, coverImage: file})}
+                          onFileSelect={(result) => {
+                            // Handle both old format (File) and new format (object)
+                            const file = result && typeof result === 'object' && result.file ? result.file : result;
+                            setEditForm({...editForm, coverImage: file});
+                          }}
                           currentImage={selectedContent?.coverImage}
                           label="Game Cover Image (optional)"
                           accept="image/*"
