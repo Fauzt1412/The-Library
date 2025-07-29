@@ -882,12 +882,26 @@ const AdminPanel = () => {
               />
             </div>
             <div className="col-md-6 mb-3">
-              <FileUpload
-                onFileSelect={(file) => setBookForm({...bookForm, coverImage: file})}
+              <FileUploadWithToggle
+                onFileSelect={(result) => {
+                  console.log('Admin Book FileUpload result:', result);
+                  // Handle both upload methods
+                  if (result && result.uploadMethod === 'cloudinary') {
+                    console.log('Setting Cloudinary data:', result.cloudinaryUrl);
+                    setBookForm({...bookForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
+                  } else if (result && result.uploadMethod === 'local') {
+                    console.log('Setting local file:', result.file);
+                    setBookForm({...bookForm, coverImage: result.file});
+                  } else {
+                    setBookForm({...bookForm, coverImage: result});
+                  }
+                }}
                 currentImage={modalType === 'edit' && currentItem?.Coverpage ? currentItem.Coverpage : null}
                 label="Book Cover Image"
                 accept="image/*"
                 maxSize={5 * 1024 * 1024}
+                cloudinaryFolder="books"
+                defaultMethod="cloudinary"
               />
             </div>
           </div>
@@ -1023,12 +1037,26 @@ const AdminPanel = () => {
 
           </div>
           <div className="mb-3">
-            <FileUpload
-              onFileSelect={(file) => setGameForm({...gameForm, coverImage: file})}
+            <FileUploadWithToggle
+              onFileSelect={(result) => {
+                console.log('Admin Game FileUpload result:', result);
+                // Handle both upload methods
+                if (result && result.uploadMethod === 'cloudinary') {
+                  console.log('Setting Cloudinary data:', result.cloudinaryUrl);
+                  setGameForm({...gameForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
+                } else if (result && result.uploadMethod === 'local') {
+                  console.log('Setting local file:', result.file);
+                  setGameForm({...gameForm, coverImage: result.file});
+                } else {
+                  setGameForm({...gameForm, coverImage: result});
+                }
+              }}
               currentImage={modalType === 'edit' && currentItem?.coverImage ? currentItem.coverImage : null}
               label="Game Cover Image"
               accept="image/*"
               maxSize={5 * 1024 * 1024}
+              cloudinaryFolder="games"
+              defaultMethod="cloudinary"
             />
           </div>
           
