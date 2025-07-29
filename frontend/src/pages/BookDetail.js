@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { booksAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
 import ReadButton from '../components/ReadButton';
+import ReadButtonBox from '../components/ReadButtonBox';
 import { handleImageError, getPlaceholderImage } from '../utils/imageUtils';
 
 const BookDetail = () => {

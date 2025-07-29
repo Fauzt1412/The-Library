@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { gamesAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
 import PlayButton from '../components/PlayButton';
