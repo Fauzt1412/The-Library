@@ -316,26 +316,53 @@ const ApproveEditRequest = async (req, res) => {
         }
         
         // Update the actual content
+        console.log('🔄 ApproveEditRequest - Processing proposed changes:', editRequest.proposedChanges);
+        
+        // Prepare update data with proper field mapping
+        const updateData = { ...editRequest.proposedChanges };
+        
+        // Handle image field mapping and Cloudinary data
+        if (editRequest.contentType === 'book') {
+            // For books, map coverImage to Coverpage if provided
+            if (updateData.coverImage) {
+                updateData.Coverpage = updateData.coverImage;
+                delete updateData.coverImage; // Remove the temporary field
+            }
+            
+            // Handle Cloudinary data for books
+            if (updateData.cloudinaryData) {
+                console.log('📷 ApproveEditRequest - Book Cloudinary data found:', updateData.cloudinaryData);
+                // Cloudinary data is already in the correct format
+            }
+        } else {
+            // For games, coverImage field name stays the same
+            if (updateData.cloudinaryData) {
+                console.log('📷 ApproveEditRequest - Game Cloudinary data found:', updateData.cloudinaryData);
+                // Cloudinary data is already in the correct format
+            }
+        }
+        
+        // Add update timestamp
+        updateData.updatedAt = new Date();
+        
+        console.log('💾 ApproveEditRequest - Final update data:', updateData);
+        
         let updatedContent;
         if (editRequest.contentType === 'book') {
             updatedContent = await Book.findByIdAndUpdate(
                 editRequest.contentId,
-                {
-                    ...editRequest.proposedChanges,
-                    updatedAt: new Date()
-                },
+                updateData,
                 { new: true }
             );
         } else {
             updatedContent = await Game.findByIdAndUpdate(
                 editRequest.contentId,
-                {
-                    ...editRequest.proposedChanges,
-                    updatedAt: new Date()
-                },
+                updateData,
                 { new: true }
             );
         }
+        
+        console.log('✅ ApproveEditRequest - Content updated successfully:', updatedContent._id);
         
         // Update edit request status
         editRequest.status = 'approved';
