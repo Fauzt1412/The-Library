@@ -16,7 +16,7 @@ const SubmitContent = () => {
     categories: '',
     description: '',
     publishedDate: '',
-    coverImage: null,
+    coverImage: null, // Will store either File object or Cloudinary data object
     readingLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
   });
   
@@ -27,7 +27,7 @@ const SubmitContent = () => {
     platform: '',
     releaseDate: '',
     description: '',
-    coverImage: null,
+    coverImage: null, // Will store either File object or Cloudinary data object
     platformLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
   });
   
@@ -92,7 +92,7 @@ const SubmitContent = () => {
       console.log('Cover image value:', currentForm.coverImage);
       console.log('Cover image type:', typeof currentForm.coverImage);
       
-      // Validate required fields - handle both Cloudinary URLs and File objects
+      // Validate coverImage - handle both Cloudinary objects and File objects
       if (!currentForm.coverImage) {
         console.log('Validation failed: coverImage is falsy');
         setError('Cover image is required');
@@ -100,21 +100,47 @@ const SubmitContent = () => {
         return;
       }
       
-      // Additional validation for Cloudinary uploads
-      if (typeof currentForm.coverImage === 'string' && currentForm.coverImage.length === 0) {
-        console.log('Validation failed: coverImage is empty string');
-        setError('Cover image is required');
+      // Check if it's a Cloudinary object with URL
+      if (currentForm.coverImage.type === 'cloudinary' && !currentForm.coverImage.cloudinaryUrl) {
+        console.log('Validation failed: Cloudinary object missing URL');
+        setError('Cover image upload failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+      
+      // Check if it's a File object
+      if (currentForm.coverImage instanceof File && currentForm.coverImage.size === 0) {
+        console.log('Validation failed: File object is empty');
+        setError('Cover image file is empty. Please select a valid image.');
         setLoading(false);
         return;
       }
       
       console.log('Validation passed! Proceeding with submission...');
       
-      // Prepare submission data
+      // Prepare submission data with proper coverImage handling
       const submissionData = {
         type: activeTab,
         ...currentForm
       };
+      
+      // Handle coverImage based on type (Cloudinary or File)
+      if (currentForm.coverImage && currentForm.coverImage.type === 'cloudinary') {
+        // For Cloudinary uploads, send the URL and metadata
+        submissionData.coverImage = currentForm.coverImage.cloudinaryUrl;
+        submissionData.cloudinaryData = {
+          publicId: currentForm.coverImage.publicId,
+          width: currentForm.coverImage.width,
+          height: currentForm.coverImage.height,
+          format: currentForm.coverImage.format,
+          bytes: currentForm.coverImage.bytes
+        };
+        console.log('Sending Cloudinary data:', submissionData.cloudinaryData);
+      } else if (currentForm.coverImage instanceof File) {
+        // For traditional uploads, keep the File object
+        submissionData.coverImage = currentForm.coverImage;
+        console.log('Sending File object:', currentForm.coverImage.name);
+      }
       
       // Filter out empty links
       if (activeTab === 'book') {
@@ -135,7 +161,7 @@ const SubmitContent = () => {
           categories: '',
           description: '',
           publishedDate: '',
-          coverImage: null,
+          coverImage: null, // Reset to null for both Cloudinary and File objects
           readingLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
         });
       } else {
@@ -146,11 +172,10 @@ const SubmitContent = () => {
           platform: '',
           releaseDate: '',
           description: '',
-          coverImage: null,
+          coverImage: null, // Reset to null for both Cloudinary and File objects
           platformLinks: [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
         });
       }
-      
     } catch (error) {
       console.error('Error submitting content:', error);
       const errorMessage = error.response?.data?.error || 'Failed to submit content. Please try again.';
@@ -331,14 +356,9 @@ const SubmitContent = () => {
                     <FileUpload
                       onFileSelect={(result) => {
                         console.log('Book FileUpload result:', result);
-                        // Handle both Cloudinary and traditional uploads
-                        if (result && typeof result === 'object' && result.type === 'cloudinary') {
-                          console.log('Setting Cloudinary URL:', result.cloudinaryUrl);
-                          setBookForm({...bookForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
-                        } else {
-                          console.log('Setting traditional file:', result);
-                          setBookForm({...bookForm, coverImage: result});
-                        }
+                        // Store the complete result object (either Cloudinary data or File)
+                        console.log('Setting coverImage to:', result);
+                        setBookForm({...bookForm, coverImage: result});
                       }}
                       label="Book Cover Image *"
                       accept="image/*"
@@ -417,14 +437,9 @@ const SubmitContent = () => {
                   <FileUpload
                     onFileSelect={(result) => {
                       console.log('Game FileUpload result:', result);
-                      // Handle both Cloudinary and traditional uploads
-                      if (result && typeof result === 'object' && result.type === 'cloudinary') {
-                        console.log('Setting Cloudinary URL:', result.cloudinaryUrl);
-                        setGameForm({...gameForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
-                      } else {
-                        console.log('Setting traditional file:', result);
-                        setGameForm({...gameForm, coverImage: result});
-                      }
+                      // Store the complete result object (either Cloudinary data or File)
+                      console.log('Setting coverImage to:', result);
+                      setGameForm({...gameForm, coverImage: result});
                     }}
                     label="Game Cover Image *"
                     accept="image/*"
