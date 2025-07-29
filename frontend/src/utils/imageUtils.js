@@ -1,3 +1,5 @@
+import { getLocalPlaceholder } from './placeholderUtils';
+
 // Utility function to get the correct image URL
 export const getImageUrl = (imagePath, placeholderType = 'book') => {
   if (!imagePath) {
@@ -20,8 +22,6 @@ export const getImageUrl = (imagePath, placeholderType = 'book') => {
   // Otherwise, assume it's a relative path and prepend base URL with '/'
   return `${baseUrl}/${imagePath}`;
 };
-
-import { getLocalPlaceholder } from './placeholderUtils';
 
 // Utility function to get placeholder image (now using local placeholders)
 export const getPlaceholderImage = (type = 'book') => {
