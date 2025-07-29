@@ -11,8 +11,8 @@ export const getImageUrl = (imagePath, placeholderType = 'book') => {
     return imagePath;
   }
   
-  // For local paths, use localhost for development
-  const baseUrl = 'http://localhost:1412';
+  // Use environment variable for API URL, fallback to localhost for development
+  const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:1412';
   
   // If the imagePath starts with '/', prepend the base URL
   if (imagePath.startsWith('/')) {

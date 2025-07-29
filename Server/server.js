@@ -14,7 +14,8 @@ console.log(`📊 Database URL: ${databaseURL}`);
 const allowedOrigins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    process.env.FRONTEND_URL // This will be your Vercel URL
+    'https://the-library-seven.vercel.app', // Your actual Vercel URL
+    process.env.FRONTEND_URL // Additional frontend URL from environment
 ].filter(Boolean); // Remove undefined values
 
 app.use(cors({
