@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { booksAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
+import ReadButtonBox from '../components/ReadButtonBox';
 import { useAuth } from '../context/AuthContext';
 import { getImageUrl } from '../utils/imageUtils';
 
