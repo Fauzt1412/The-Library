@@ -1756,7 +1756,7 @@ const AdminPanel = () => {
                       <div className="card-body text-center">
                         {detailsSubmission.coverImage ? (
                           <img 
-                            src={`http://localhost:1412${detailsSubmission.coverImage}`} 
+                            src={getImageUrl(detailsSubmission.coverImage, detailsSubmission.type)} 
                             alt={detailsSubmission.title}
                             className="img-fluid rounded shadow"
                             style={{ maxHeight: '300px', objectFit: 'cover' }}
