@@ -12,10 +12,26 @@ const SubmitContent = async (req, res) => {
             status: 'pending'
         };
         
+        console.log('📝 SubmitContent - Request data:', {
+            body: req.body,
+            file: req.file ? {
+                filename: req.file.filename,
+                originalname: req.file.originalname,
+                mimetype: req.file.mimetype,
+                size: req.file.size,
+                path: req.file.path,
+                destination: req.file.destination
+            } : null,
+            user: req.user ? req.user._id : null
+        });
+        
         // Handle file upload
         if (req.file) {
             const uploadPath = req.body.type === 'book' ? 'books' : 'games';
             submissionData.coverImage = `/uploads/${uploadPath}/${req.file.filename}`;
+            console.log('📷 SubmitContent - Cover image URL:', submissionData.coverImage);
+        } else {
+            console.log('❌ SubmitContent - No file uploaded');
         }
         
         // Parse links if they exist
@@ -35,8 +51,11 @@ const SubmitContent = async (req, res) => {
             }
         }
         
+        // Create the submission
+        console.log('📝 Creating submission with data:', submissionData);
         const submission = new Submission(submissionData);
         await submission.save();
+        console.log('✅ Submission created successfully:', submission._id);
         
         // Populate the submission for response
         const populatedSubmission = await Submission.findById(submission._id)

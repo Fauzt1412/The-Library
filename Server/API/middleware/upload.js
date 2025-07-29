@@ -6,6 +6,7 @@ const fs = require('fs');
 const ensureDirectoryExists = (dirPath) => {
     if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
+        console.log(`📁 Created directory: ${dirPath}`);
     }
 };
 
@@ -25,7 +26,6 @@ const bookStorage = multer.diskStorage({
         cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-        // Generate unique filename: timestamp + random number + original extension
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const extension = path.extname(file.originalname);
         cb(null, 'book-' + uniqueSuffix + extension);
@@ -40,17 +40,16 @@ const gameStorage = multer.diskStorage({
         cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-        // Generate unique filename: timestamp + random number + original extension
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const extension = path.extname(file.originalname);
         cb(null, 'game-' + uniqueSuffix + extension);
     }
 });
 
-// Storage configuration for submissions (dynamic based on type)
+// Storage configuration for submissions
 const submissionStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const type = req.body.type || 'books'; // Default to books if type not specified
+        const type = req.body.type || 'books';
         const uploadPath = getUploadsPath(`${type}s`);
         ensureDirectoryExists(uploadPath);
         cb(null, uploadPath);
@@ -63,11 +62,9 @@ const submissionStorage = multer.diskStorage({
     }
 });
 
-// File filter to only allow image files
+// File filter
 const imageFilter = (req, file, cb) => {
-    // Check if file is an image
     if (file.mimetype.startsWith('image/')) {
-        // Check for specific image types
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true);
@@ -79,32 +76,30 @@ const imageFilter = (req, file, cb) => {
     }
 };
 
-// Multer configuration for books
+// Create multer instances
 const uploadBookCover = multer({
     storage: bookStorage,
     fileFilter: imageFilter,
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB limit
     }
-}).single('coverImage'); // Field name for book cover
+}).single('coverImage');
 
-// Multer configuration for games
 const uploadGameCover = multer({
     storage: gameStorage,
     fileFilter: imageFilter,
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB limit
     }
-}).single('coverImage'); // Field name for game cover
+}).single('coverImage');
 
-// Multer configuration for submissions
 const uploadSubmissionCover = multer({
     storage: submissionStorage,
     fileFilter: imageFilter,
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB limit
     }
-}).single('coverImage'); // Field name for submission cover
+}).single('coverImage');
 
 // Error handling middleware
 const handleUploadError = (error, req, res, next) => {

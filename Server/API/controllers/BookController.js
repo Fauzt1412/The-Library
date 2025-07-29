@@ -30,13 +30,28 @@ const CreateBook = async (req, res) => {
     const { title, author, categories, publishedDate, description, readingLinks } = req.body;
     
     try {
+        console.log('📝 CreateBook - Request data:', {
+            body: req.body,
+            file: req.file ? {
+                filename: req.file.filename,
+                originalname: req.file.originalname,
+                mimetype: req.file.mimetype,
+                size: req.file.size,
+                path: req.file.path,
+                destination: req.file.destination
+            } : null,
+            user: req.user ? req.user._id : null
+        });
+        
         // Check if file was uploaded
         if (!req.file) {
+            console.log('❌ CreateBook - No file uploaded');
             return res.status(400).json({ error: 'Cover image is required' });
         }
         
         // Generate the URL for the uploaded image
         const coverImageUrl = `/uploads/books/${req.file.filename}`;
+        console.log('📷 CreateBook - Cover image URL:', coverImageUrl);
         
         // Parse reading links if they exist
         let parsedReadingLinks = [];
@@ -50,22 +65,28 @@ const CreateBook = async (req, res) => {
             }
         }
         
-        const newBook = new book({ 
+        const bookData = { 
             title, 
             author, 
             categories, 
             publishedDate, 
             description, 
-            Coverpage: coverImageUrl, // Use the uploaded file path
+            Coverpage: coverImageUrl,
             readingLinks: parsedReadingLinks,
             publishedBy: req.user._id
-        });
+        };
         
+        console.log('💾 CreateBook - Book data to save:', bookData);
+        
+        const newBook = new book(bookData);
         await newBook.save();
+        
+        console.log('✅ CreateBook - Book saved successfully:', newBook._id);
+        
         const populatedBook = await book.findById(newBook._id).populate('publishedBy', 'username email');
         res.status(201).json({ message: 'Book published successfully', book: populatedBook });
     } catch (error) {
-        console.error('Error publishing book:', error);
+        console.error('❌ CreateBook - Error:', error);
         res.status(500).json({ error: 'Error publishing book' });
     }
 }
@@ -75,6 +96,20 @@ const UpdateBook = async (req, res) => {
     const { title, author, categories, publishedDate, description, readingLinks } = req.body;
     
     try {
+        console.log('🔄 UpdateBook - Request data:', {
+            id,
+            body: req.body,
+            file: req.file ? {
+                filename: req.file.filename,
+                originalname: req.file.originalname,
+                mimetype: req.file.mimetype,
+                size: req.file.size,
+                path: req.file.path,
+                destination: req.file.destination
+            } : null,
+            user: req.user ? req.user._id : null
+        });
+        
         const existingBook = await book.findById(id);
         if (!existingBook) {
             return res.status(404).json({ error: 'Book not found' });
@@ -111,15 +146,20 @@ const UpdateBook = async (req, res) => {
         // If a new file was uploaded, update the cover image
         if (req.file) {
             updateData.Coverpage = `/uploads/books/${req.file.filename}`;
-            
-            // TODO: Delete old image file (optional)
-            // You might want to implement file cleanup here
+            console.log('📷 UpdateBook - New cover image URL:', updateData.Coverpage);
+        } else {
+            console.log('📷 UpdateBook - No new image uploaded, keeping existing');
         }
         
+        console.log('💾 UpdateBook - Update data:', updateData);
+        
         const updatedBook = await book.findByIdAndUpdate(id, updateData, { new: true }).populate('publishedBy', 'username email');
+        
+        console.log('✅ UpdateBook - Book updated successfully:', updatedBook._id);
+        
         res.status(200).json({ message: 'Book updated successfully', book: updatedBook });
     } catch (error) {
-        console.error('Error updating book:', error);
+        console.error('❌ UpdateBook - Error:', error);
         res.status(500).json({ error: 'Error updating book' });
     }
 }
