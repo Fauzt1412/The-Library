@@ -87,12 +87,28 @@ const SubmitContent = () => {
     try {
       const currentForm = activeTab === 'book' ? bookForm : gameForm;
       
-      // Validate required fields
+      // Debug: Log the current form state
+      console.log('Current form data:', currentForm);
+      console.log('Cover image value:', currentForm.coverImage);
+      console.log('Cover image type:', typeof currentForm.coverImage);
+      
+      // Validate required fields - handle both Cloudinary URLs and File objects
       if (!currentForm.coverImage) {
+        console.log('Validation failed: coverImage is falsy');
         setError('Cover image is required');
         setLoading(false);
         return;
       }
+      
+      // Additional validation for Cloudinary uploads
+      if (typeof currentForm.coverImage === 'string' && currentForm.coverImage.length === 0) {
+        console.log('Validation failed: coverImage is empty string');
+        setError('Cover image is required');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Validation passed! Proceeding with submission...');
       
       // Prepare submission data
       const submissionData = {
@@ -314,10 +330,13 @@ const SubmitContent = () => {
                   <div className="col-md-6 mb-3">
                     <FileUpload
                       onFileSelect={(result) => {
+                        console.log('Book FileUpload result:', result);
                         // Handle both Cloudinary and traditional uploads
                         if (result && typeof result === 'object' && result.type === 'cloudinary') {
+                          console.log('Setting Cloudinary URL:', result.cloudinaryUrl);
                           setBookForm({...bookForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
                         } else {
+                          console.log('Setting traditional file:', result);
                           setBookForm({...bookForm, coverImage: result});
                         }
                       }}
@@ -397,10 +416,13 @@ const SubmitContent = () => {
                 <div className="mb-3">
                   <FileUpload
                     onFileSelect={(result) => {
+                      console.log('Game FileUpload result:', result);
                       // Handle both Cloudinary and traditional uploads
                       if (result && typeof result === 'object' && result.type === 'cloudinary') {
+                        console.log('Setting Cloudinary URL:', result.cloudinaryUrl);
                         setGameForm({...gameForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
                       } else {
+                        console.log('Setting traditional file:', result);
                         setGameForm({...gameForm, coverImage: result});
                       }
                     }}
