@@ -322,6 +322,7 @@ const SubmitContent = () => {
                       accept="image/*"
                       maxSize={5 * 1024 * 1024}
                     />
+                  </div>
                 </div>
                 
                 {renderLinkInputs(bookForm.readingLinks, 'book')}
