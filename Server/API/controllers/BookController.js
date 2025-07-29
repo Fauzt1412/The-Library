@@ -162,16 +162,22 @@ const UpdateBook = async (req, res) => {
         
         // Handle cover image update
         if (cloudinaryData && coverImageUrl) {
-            // Cloudinary upload
+            // New Cloudinary upload
             updateData.Coverpage = coverImageUrl;
             updateData.cloudinaryData = cloudinaryData;
             console.log('📷 UpdateBook - New Cloudinary image URL:', coverImageUrl);
         } else if (req.file) {
-            // Traditional file upload
+            // New traditional file upload
             updateData.Coverpage = `/uploads/books/${req.file.filename}`;
+            // Clear cloudinary data if switching to local upload
+            updateData.cloudinaryData = null;
             console.log('📷 UpdateBook - New uploaded image URL:', updateData.Coverpage);
+        } else if (coverImageUrl && !cloudinaryData) {
+            // Existing image URL provided (no new upload)
+            updateData.Coverpage = coverImageUrl;
+            console.log('📷 UpdateBook - Keeping existing image URL:', coverImageUrl);
         } else {
-            console.log('📷 UpdateBook - No new image provided, keeping existing');
+            console.log('📷 UpdateBook - No image changes, keeping existing');
         }
         
         console.log('💾 UpdateBook - Update data:', updateData);

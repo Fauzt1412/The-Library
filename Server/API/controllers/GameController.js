@@ -164,16 +164,22 @@ const UpdateGame = async (req, res) => {
         
         // Handle cover image update
         if (cloudinaryData && coverImageUrl) {
-            // Cloudinary upload
+            // New Cloudinary upload
             updateData.coverImage = coverImageUrl;
             updateData.cloudinaryData = cloudinaryData;
             console.log('📷 UpdateGame - New Cloudinary image URL:', coverImageUrl);
         } else if (req.file) {
-            // Traditional file upload
+            // New traditional file upload
             updateData.coverImage = `/uploads/games/${req.file.filename}`;
+            // Clear cloudinary data if switching to local upload
+            updateData.cloudinaryData = null;
             console.log('📷 UpdateGame - New uploaded image URL:', updateData.coverImage);
+        } else if (coverImageUrl && !cloudinaryData) {
+            // Existing image URL provided (no new upload)
+            updateData.coverImage = coverImageUrl;
+            console.log('📷 UpdateGame - Keeping existing image URL:', coverImageUrl);
         } else {
-            console.log('📷 UpdateGame - No new image provided, keeping existing');
+            console.log('📷 UpdateGame - No image changes, keeping existing');
         }
         
         console.log('💾 UpdateGame - Update data:', updateData);

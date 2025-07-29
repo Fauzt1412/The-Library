@@ -302,6 +302,7 @@ const AdminPanel = () => {
   };
 
   const handleEdit = (item) => {
+    console.log('🔄 handleEdit - Item data:', item);
     setModalType('edit');
     setCurrentItem(item);
     if (activeTab === 'books') {
@@ -311,9 +312,13 @@ const AdminPanel = () => {
         categories: item.categories || '',
         description: item.description || '',
         publishedDate: item.publishedDate ? item.publishedDate.split('T')[0] : '',
-        coverImage: null,
-        cloudinaryData: null,
+        coverImage: item.Coverpage || null, // Preserve existing image URL
+        cloudinaryData: item.cloudinaryData || null, // Preserve existing Cloudinary data
         readingLinks: item.readingLinks && item.readingLinks.length > 0 ? item.readingLinks : [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
+      });
+      console.log('📚 handleEdit - Book form set:', {
+        coverImage: item.Coverpage,
+        cloudinaryData: item.cloudinaryData
       });
     } else if (activeTab === 'games') {
       setGameForm({
@@ -323,9 +328,13 @@ const AdminPanel = () => {
         platform: item.platform || '',
         releaseDate: item.releaseDate ? item.releaseDate.split('T')[0] : '',
         description: item.description || '',
-        coverImage: null,
-        cloudinaryData: null,
+        coverImage: item.coverImage || null, // Preserve existing image URL
+        cloudinaryData: item.cloudinaryData || null, // Preserve existing Cloudinary data
         platformLinks: item.platformLinks && item.platformLinks.length > 0 ? item.platformLinks : [{ name: '', url: '', icon: 'fas fa-external-link-alt' }]
+      });
+      console.log('🎮 handleEdit - Game form set:', {
+        coverImage: item.coverImage,
+        cloudinaryData: item.cloudinaryData
       });
     } else if (activeTab === 'users') {
       setUserForm({
