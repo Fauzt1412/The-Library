@@ -1,4 +1,5 @@
 // Cloudinary utilities for image management
+import { getLocalPlaceholder } from './placeholderUtils';
 
 // Check if Cloudinary is configured
 export const isCloudinaryConfigured = () => {
@@ -200,9 +201,6 @@ export const validateCloudinaryConfig = () => {
     issues: issues
   };
 };
-
-// Import local placeholder utilities for fallback
-import { getLocalPlaceholder } from './placeholderUtils';
 
 export default {
   isCloudinaryConfigured,
