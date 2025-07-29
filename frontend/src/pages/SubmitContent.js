@@ -313,11 +313,7 @@ const SubmitContent = () => {
                   </div>
                   <div className="col-md-6 mb-3">
                     <FileUpload
-                      onFileSelect={(result) => {
-                        // Handle both old format (File) and new format (object)
-                        const file = result && typeof result === 'object' && result.file ? result.file : result;
-                        setBookForm({...bookForm, coverImage: file});
-                      }}
+                      onFileSelect={(file) => setBookForm({...bookForm, coverImage: file})}
                       label="Book Cover Image *"
                       accept="image/*"
                       maxSize={5 * 1024 * 1024}
@@ -391,11 +387,7 @@ const SubmitContent = () => {
                 
                 <div className="mb-3">
                   <FileUpload
-                    onFileSelect={(result) => {
-                      // Handle both old format (File) and new format (object)
-                      const file = result && typeof result === 'object' && result.file ? result.file : result;
-                      setGameForm({...gameForm, coverImage: file});
-                    }}
+                    onFileSelect={(file) => setGameForm({...gameForm, coverImage: file})}
                     label="Game Cover Image *"
                     accept="image/*"
                     maxSize={5 * 1024 * 1024}

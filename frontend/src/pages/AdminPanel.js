@@ -882,11 +882,7 @@ const AdminPanel = () => {
             </div>
             <div className="col-md-6 mb-3">
               <FileUpload
-                onFileSelect={(result) => {
-                  // Handle both old format (File) and new format (object)
-                  const file = result && typeof result === 'object' && result.file ? result.file : result;
-                  setBookForm({...bookForm, coverImage: file});
-                }}
+                onFileSelect={(file) => setBookForm({...bookForm, coverImage: file})}
                 currentImage={modalType === 'edit' && currentItem?.Coverpage ? currentItem.Coverpage : null}
                 label="Book Cover Image"
                 accept="image/*"
@@ -1027,11 +1023,7 @@ const AdminPanel = () => {
           </div>
           <div className="mb-3">
             <FileUpload
-              onFileSelect={(result) => {
-                // Handle both old format (File) and new format (object)
-                const file = result && typeof result === 'object' && result.file ? result.file : result;
-                setGameForm({...gameForm, coverImage: file});
-              }}
+              onFileSelect={(file) => setGameForm({...gameForm, coverImage: file})}
               currentImage={modalType === 'edit' && currentItem?.coverImage ? currentItem.coverImage : null}
               label="Game Cover Image"
               accept="image/*"

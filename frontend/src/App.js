@@ -22,7 +22,6 @@ import Favorites from './pages/Favorites';
 import SubmitContent from './pages/SubmitContent';
 import UserNotifications from './pages/UserNotifications';
 import MyContent from './pages/MyContent';
-import TestFileUpload from './pages/TestFileUpload';
 
 import ProtectedRoute from './components/ProtectedRoute';
 import './styles/App.css';
@@ -56,7 +55,6 @@ function App() {
                     <Route path="/submit" element={<SubmitContent />} />
                     <Route path="/notifications" element={<UserNotifications />} />
                     <Route path="/my-content" element={<MyContent />} />
-                    <Route path="/test-upload" element={<TestFileUpload />} />
 
                     <Route 
                       path="/admin" 

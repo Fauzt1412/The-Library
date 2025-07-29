@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
+import { handleImageError, getLocalPlaceholder } from '../utils/placeholderUtils';
 
 const Favorites = () => {
   const { user, isAuthenticated } = useAuth();
@@ -167,17 +168,13 @@ const Favorites = () => {
                       <img 
                         src={
                           favorite.type === 'book' 
-                            ? (favorite.data.Coverpage ? `http://localhost:1412${favorite.data.Coverpage}` : 'https://via.placeholder.com/300x400/667eea/white?text=Book+Cover')
-                            : (favorite.data.coverImage ? `http://localhost:1412${favorite.data.coverImage}` : 'https://via.placeholder.com/300x400/764ba2/white?text=Game+Cover')
+                            ? (favorite.data.Coverpage ? `http://localhost:1412${favorite.data.Coverpage}` : getLocalPlaceholder('book'))
+                            : (favorite.data.coverImage ? `http://localhost:1412${favorite.data.coverImage}` : getLocalPlaceholder('game'))
                         }
                         className="card-img-top" 
                         alt={favorite.data.title}
                         style={{ height: '250px', objectFit: 'cover' }}
-                        onError={(e) => {
-                          e.target.src = favorite.type === 'book' 
-                            ? 'https://via.placeholder.com/300x400/667eea/white?text=Book+Cover'
-                            : 'https://via.placeholder.com/300x400/764ba2/white?text=Game+Cover';
-                        }}
+                        onError={(e) => handleImageError(e, favorite.type === 'book' ? 'book' : 'game')}
                       />
                       <div className="position-absolute top-0 end-0 p-2">
                         <button

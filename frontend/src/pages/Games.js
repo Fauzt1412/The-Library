@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { gamesAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
+import { handleImageError, getLocalPlaceholder } from '../utils/placeholderUtils';
 
 const Games = () => {
   const [games, setGames] = useState([]);
@@ -176,12 +177,10 @@ const Games = () => {
               <div key={game._id} className="col-lg-3 col-md-4 col-sm-6 mb-4">
                 <div className="card h-100">
                   <img 
-                    src={game.coverImage ? `http://localhost:1412${game.coverImage}` : 'https://via.placeholder.com/300x400/764ba2/white?text=Game+Cover'} 
+                    src={game.coverImage ? `http://localhost:1412${game.coverImage}` : getLocalPlaceholder('game')} 
                     className="card-img-top" 
                     alt={game.title}
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/300x400/764ba2/white?text=Game+Cover';
-                    }}
+                    onError={(e) => handleImageError(e, 'game')}
                   />
                   <div className="card-body d-flex flex-column">
                     <div className="d-flex justify-content-between align-items-start mb-2">

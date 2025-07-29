@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { booksAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
+import { handleImageError, getLocalPlaceholder } from '../utils/placeholderUtils';
 
 const Books = () => {
   const [books, setBooks] = useState([]);
@@ -162,12 +163,10 @@ const Books = () => {
               <div key={book._id} className="col-lg-3 col-md-4 col-sm-6 mb-4">
                 <div className="card h-100">
                   <img 
-                    src={book.Coverpage ? `http://localhost:1412${book.Coverpage}` : 'https://via.placeholder.com/300x400/667eea/white?text=Book+Cover'} 
+                    src={book.Coverpage ? `http://localhost:1412${book.Coverpage}` : getLocalPlaceholder('book')} 
                     className="card-img-top" 
                     alt={book.title}
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/300x400/667eea/white?text=Book+Cover';
-                    }}
+                    onError={(e) => handleImageError(e, 'book')}
                   />
                   <div className="card-body d-flex flex-column">
                     <div className="d-flex justify-content-between align-items-start mb-2">

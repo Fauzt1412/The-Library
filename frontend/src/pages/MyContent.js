@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { editRequestsAPI } from '../services/api';
 import FileUpload from '../components/FileUpload';
+import { handleImageError } from '../utils/placeholderUtils';
 
 const MyContent = () => {
   const { user, isAuthenticated } = useAuth();
@@ -301,9 +302,7 @@ const MyContent = () => {
                               alt={item.title}
                               className="card-img-top"
                               style={{ height: '200px', objectFit: 'cover' }}
-                              onError={(e) => {
-                                e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
-                              }}
+                              onError={(e) => handleImageError(e, 'noImage')}
                             />
                             <span className={`badge position-absolute top-0 end-0 m-2 ${item.contentType === 'book' ? 'bg-info' : 'bg-success'}`}>
                               {item.contentType === 'book' ? 'Book' : 'Game'}
@@ -490,11 +489,7 @@ const MyContent = () => {
                         </div>
                         <div className="col-md-6 mb-3">
                           <FileUpload
-                            onFileSelect={(result) => {
-                              // Handle both old format (File) and new format (object)
-                              const file = result && typeof result === 'object' && result.file ? result.file : result;
-                              setEditForm({...editForm, coverImage: file});
-                            }}
+                            onFileSelect={(file) => setEditForm({...editForm, coverImage: file})}
                             currentImage={selectedContent?.Coverpage}
                             label="Book Cover Image (optional)"
                             accept="image/*"
@@ -620,11 +615,7 @@ const MyContent = () => {
                       
                       <div className="mb-3">
                         <FileUpload
-                          onFileSelect={(result) => {
-                            // Handle both old format (File) and new format (object)
-                            const file = result && typeof result === 'object' && result.file ? result.file : result;
-                            setEditForm({...editForm, coverImage: file});
-                          }}
+                          onFileSelect={(file) => setEditForm({...editForm, coverImage: file})}
                           currentImage={selectedContent?.coverImage}
                           label="Game Cover Image (optional)"
                           accept="image/*"
