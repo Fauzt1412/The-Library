@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { editRequestsAPI } from '../services/api';
 import FileUpload from '../components/FileUpload';
-import { handleImageError } from '../utils/imageUtils';
 
 const MyContent = () => {
   const { user, isAuthenticated } = useAuth();
@@ -302,7 +301,9 @@ const MyContent = () => {
                               alt={item.title}
                               className="card-img-top"
                               style={{ height: '200px', objectFit: 'cover' }}
-                              onError={(e) => handleImageError(e, 'noImage')}
+                              onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                              }}
                             />
                             <span className={`badge position-absolute top-0 end-0 m-2 ${item.contentType === 'book' ? 'bg-info' : 'bg-success'}`}>
                               {item.contentType === 'book' ? 'Book' : 'Game'}
