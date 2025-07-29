@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { gamesAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
 import PlayButton from '../components/PlayButton';
 import PlayButtonBox from '../components/PlayButtonBox';
+import { handleImageError, getPlaceholderImage } from '../utils/imageUtils';
 
 const GameDetail = () => {
   const { id } = useParams();
@@ -141,13 +142,11 @@ const GameDetail = () => {
         <div className="col-md-4 mb-4">
           <div className="card border-0 shadow">
             <img 
-              src={game.coverImage ? `http://localhost:1412${game.coverImage}` : 'https://via.placeholder.com/400x600/764ba2/white?text=Game+Cover'} 
+              src={game.coverImage ? `http://localhost:1412${game.coverImage}` : getPlaceholderImage('gameDetail')} 
               className="card-img-top" 
               alt={game.title}
               style={{ height: '500px', objectFit: 'cover' }}
-              onError={(e) => {
-                e.target.src = 'https://via.placeholder.com/400x600/764ba2/white?text=Game+Cover';
-              }}
+              onError={(e) => handleImageError(e, 'gameDetail')}
             />
           </div>
         </div>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { booksAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
 import ReadButton from '../components/ReadButton';
-import ReadButtonBox from '../components/ReadButtonBox';
+import { handleImageError, getPlaceholderImage } from '../utils/imageUtils';
 
 const BookDetail = () => {
   const { id } = useParams();
@@ -141,13 +141,11 @@ const BookDetail = () => {
         <div className="col-md-4 mb-4">
           <div className="card border-0 shadow">
             <img 
-              src={book.Coverpage ? `http://localhost:1412${book.Coverpage}` : 'https://via.placeholder.com/400x600/667eea/white?text=Book+Cover'} 
-              className="card-img-top" 
+              src={book.Coverpage ? `http://localhost:1412${book.Coverpage}` : getPlaceholderImage('bookDetail')} 
               alt={book.title}
+              className="card-img-top"
               style={{ height: '500px', objectFit: 'cover' }}
-              onError={(e) => {
-                e.target.src = 'https://via.placeholder.com/400x600/667eea/white?text=Book+Cover';
-              }}
+              onError={(e) => handleImageError(e, 'bookDetail')}
             />
           </div>
         </div>

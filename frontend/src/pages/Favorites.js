@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
+import { useFavorites } from '../context/FavoritesContext';
+import FavoriteButton from '../components/FavoriteButton';
+import { handleImageError, getPlaceholderImage } from '../utils/imageUtils';
 
 const Favorites = () => {
   const { user, isAuthenticated } = useAuth();
@@ -165,19 +167,15 @@ const Favorites = () => {
                   <div className="card h-100">
                     <div className="position-relative">
                       <img 
-                        src={
-                          favorite.type === 'book' 
-                            ? (favorite.data.Coverpage ? `http://localhost:1412${favorite.data.Coverpage}` : 'https://via.placeholder.com/300x400/667eea/white?text=Book+Cover')
-                            : (favorite.data.coverImage ? `http://localhost:1412${favorite.data.coverImage}` : 'https://via.placeholder.com/300x400/764ba2/white?text=Game+Cover')
-                        }
+                          src={
+                            favorite.contentType === 'book'
+                            ? (favorite.data.Coverpage ? `http://localhost:1412${favorite.data.Coverpage}` : getPlaceholderImage('book'))
+                            : (favorite.data.coverImage ? `http://localhost:1412${favorite.data.coverImage}` : getPlaceholderImage('game'))
+                          }
                         className="card-img-top" 
                         alt={favorite.data.title}
                         style={{ height: '250px', objectFit: 'cover' }}
-                        onError={(e) => {
-                          e.target.src = favorite.type === 'book' 
-                            ? 'https://via.placeholder.com/300x400/667eea/white?text=Book+Cover'
-                            : 'https://via.placeholder.com/300x400/764ba2/white?text=Game+Cover';
-                        }}
+                        onError={(e) => handleImageError(e, favorite.contentType === 'book' ? 'book' : 'game')}
                       />
                       <div className="position-absolute top-0 end-0 p-2">
                         <button

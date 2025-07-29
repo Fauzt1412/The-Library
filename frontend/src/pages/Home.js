@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { booksAPI, gamesAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
+import { handleImageError, getPlaceholderImage } from '../utils/imageUtils';
 
 const Home = () => {
   const [featuredBooks, setFeaturedBooks] = useState([]);
@@ -128,12 +129,10 @@ const Home = () => {
                 <div key={book._id} className="col-md-4 mb-4">
                   <div className="card h-100">
                     <img 
-                      src={book.Coverpage ? `http://localhost:1412${book.Coverpage}` : 'https://via.placeholder.com/300x400/667eea/white?text=Book+Cover'} 
+                      src={book.Coverpage ? `http://localhost:1412${book.Coverpage}` : getPlaceholderImage('book')} 
                       className="card-img-top" 
                       alt={book.title}
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/300x400/667eea/white?text=Book+Cover';
-                      }}
+                      onError={(e) => handleImageError(e, 'book')}
                     />
                     <div className="card-body d-flex flex-column">
                       <div className="d-flex justify-content-between align-items-start mb-2">
@@ -181,12 +180,10 @@ const Home = () => {
                 <div key={game._id} className="col-md-4 mb-4">
                   <div className="card h-100">
                     <img 
-                      src={game.coverImage ? `http://localhost:1412${game.coverImage}` : 'https://via.placeholder.com/300x400/764ba2/white?text=Game+Cover'} 
+                      src={game.coverImage ? `http://localhost:1412${game.coverImage}` : getPlaceholderImage('game')} 
                       className="card-img-top" 
                       alt={game.title}
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/300x400/764ba2/white?text=Game+Cover';
-                      }}
+                      onError={(e) => handleImageError(e, 'game')}
                     />
                     <div className="card-body d-flex flex-column">
                       <div className="d-flex justify-content-between align-items-start mb-2">
