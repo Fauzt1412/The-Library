@@ -340,38 +340,73 @@ export const submissionsAPI = {
       throw new Error('User not authenticated');
     }
     
-    const formData = new FormData();
-    formData.append('userId', currentUser._id);
-    formData.append('type', submissionData.type);
-    formData.append('title', submissionData.title);
-    formData.append('description', submissionData.description);
+    console.log('📤 Submitting data:', submissionData);
     
-    if (submissionData.type === 'book') {
-      formData.append('author', submissionData.author);
-      formData.append('categories', submissionData.categories);
-      formData.append('publishedDate', submissionData.publishedDate);
-      if (submissionData.readingLinks) {
-        formData.append('readingLinks', JSON.stringify(submissionData.readingLinks));
-      }
+    // Check if we have Cloudinary data or traditional file upload
+    const hasCloudinaryData = submissionData.cloudinaryData && submissionData.cloudinaryData.publicId;
+    const hasFileUpload = submissionData.coverImage instanceof File;
+    
+    console.log('📤 Upload type:', { hasCloudinaryData, hasFileUpload });
+    
+    if (hasCloudinaryData) {
+      // For Cloudinary uploads, use JSON
+      console.log('📤 Using JSON for Cloudinary submission');
+      return api.post('/submissions', {
+        userId: currentUser._id,
+        type: submissionData.type,
+        title: submissionData.title,
+        description: submissionData.description,
+        coverImageUrl: submissionData.coverImage, // Cloudinary URL
+        cloudinaryData: submissionData.cloudinaryData,
+        ...(submissionData.type === 'book' ? {
+          author: submissionData.author,
+          categories: submissionData.categories,
+          publishedDate: submissionData.publishedDate,
+          readingLinks: submissionData.readingLinks || []
+        } : {
+          developer: submissionData.developer,
+          genre: submissionData.genre,
+          platform: submissionData.platform,
+          releaseDate: submissionData.releaseDate,
+          platformLinks: submissionData.platformLinks || []
+        })
+      });
     } else {
-      formData.append('developer', submissionData.developer);
-      formData.append('genre', submissionData.genre);
-      formData.append('platform', submissionData.platform);
-      formData.append('releaseDate', submissionData.releaseDate);
-      if (submissionData.platformLinks) {
-        formData.append('platformLinks', JSON.stringify(submissionData.platformLinks));
+      // For traditional file uploads, use FormData
+      console.log('📤 Using FormData for traditional file submission');
+      const formData = new FormData();
+      formData.append('userId', currentUser._id);
+      formData.append('type', submissionData.type);
+      formData.append('title', submissionData.title);
+      formData.append('description', submissionData.description);
+      
+      if (submissionData.type === 'book') {
+        formData.append('author', submissionData.author);
+        formData.append('categories', submissionData.categories);
+        formData.append('publishedDate', submissionData.publishedDate);
+        if (submissionData.readingLinks) {
+          formData.append('readingLinks', JSON.stringify(submissionData.readingLinks));
+        }
+      } else {
+        formData.append('developer', submissionData.developer);
+        formData.append('genre', submissionData.genre);
+        formData.append('platform', submissionData.platform);
+        formData.append('releaseDate', submissionData.releaseDate);
+        if (submissionData.platformLinks) {
+          formData.append('platformLinks', JSON.stringify(submissionData.platformLinks));
+        }
       }
+      
+      if (submissionData.coverImage) {
+        formData.append('coverImage', submissionData.coverImage);
+      }
+      
+      return api.post('/submissions', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
     }
-    
-    if (submissionData.coverImage) {
-      formData.append('coverImage', submissionData.coverImage);
-    }
-    
-    return api.post('/submissions', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
   },
   getAll: () => {
     const user = getCurrentUser();

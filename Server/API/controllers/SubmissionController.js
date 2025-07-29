@@ -25,13 +25,20 @@ const SubmitContent = async (req, res) => {
             user: req.user ? req.user._id : null
         });
         
-        // Handle file upload
+        // Handle cover image (both file upload and Cloudinary URL)
         if (req.file) {
+            // Traditional file upload
             const uploadPath = req.body.type === 'book' ? 'books' : 'games';
             submissionData.coverImage = `/uploads/${uploadPath}/${req.file.filename}`;
-            console.log('📷 SubmitContent - Cover image URL:', submissionData.coverImage);
+            console.log('📷 SubmitContent - File upload cover image:', submissionData.coverImage);
+        } else if (req.body.coverImageUrl) {
+            // Cloudinary URL
+            submissionData.coverImage = req.body.coverImageUrl;
+            submissionData.cloudinaryData = req.body.cloudinaryData;
+            console.log('☁️ SubmitContent - Cloudinary cover image:', submissionData.coverImage);
+            console.log('☁️ SubmitContent - Cloudinary data:', submissionData.cloudinaryData);
         } else {
-            console.log('❌ SubmitContent - No file uploaded');
+            console.log('❌ SubmitContent - No cover image provided');
         }
         
         // Parse links if they exist
