@@ -313,10 +313,19 @@ const SubmitContent = () => {
                   </div>
                   <div className="col-md-6 mb-3">
                     <FileUpload
-                      onFileSelect={(file) => setBookForm({...bookForm, coverImage: file})}
+                      onFileSelect={(result) => {
+                        // Handle both Cloudinary and traditional uploads
+                        if (result && typeof result === 'object' && result.type === 'cloudinary') {
+                          setBookForm({...bookForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
+                        } else {
+                          setBookForm({...bookForm, coverImage: result});
+                        }
+                      }}
                       label="Book Cover Image *"
                       accept="image/*"
                       maxSize={5 * 1024 * 1024}
+                      enableCloudinary={true}
+                      cloudinaryFolder="books"
                     />
                   </div>
                 </div>
@@ -387,10 +396,19 @@ const SubmitContent = () => {
                 
                 <div className="mb-3">
                   <FileUpload
-                    onFileSelect={(file) => setGameForm({...gameForm, coverImage: file})}
+                    onFileSelect={(result) => {
+                      // Handle both Cloudinary and traditional uploads
+                      if (result && typeof result === 'object' && result.type === 'cloudinary') {
+                        setGameForm({...gameForm, coverImage: result.cloudinaryUrl, cloudinaryData: result});
+                      } else {
+                        setGameForm({...gameForm, coverImage: result});
+                      }
+                    }}
                     label="Game Cover Image *"
                     accept="image/*"
                     maxSize={5 * 1024 * 1024}
+                    enableCloudinary={true}
+                    cloudinaryFolder="games"
                   />
                 </div>
                 
