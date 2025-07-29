@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { booksAPI, gamesAPI, usersAPI, notificationsAPI, submissionsAPI, editRequestsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import FileUpload from '../components/FileUpload';
+import { getImageUrl } from '../utils/imageUtils';
 
 const AdminPanel = () => {
   const { user, isAuthenticated, isAdmin } = useAuth();
