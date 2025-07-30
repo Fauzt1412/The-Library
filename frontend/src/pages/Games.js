@@ -4,6 +4,7 @@ import { gamesAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
 import { handleImageError, getLocalPlaceholder } from '../utils/placeholderUtils';
 import { getImageUrl } from '../utils/imageUtils';
+import '../styles/search-components.css';
 
 const Games = () => {
   const [games, setGames] = useState([]);
@@ -118,60 +119,63 @@ const Games = () => {
       )}
 
       {/* Search and Filter Section */}
-      <div className="row mb-4">
-        <div className="col-md-6">
-          <div className="input-group">
-            <span className="input-group-text">
-              <i className="fas fa-search"></i>
-            </span>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Search games by title or developer..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+      <div className="search-filter-container">
+        <div className="search-filter-title">
+          <i className="fas fa-search"></i>
+          Search & Filter Games
+        </div>
+        <div className="row">
+          <div className="col-md-6 mb-3 mb-md-0">
+            <div className="search-input-group">
+              <span className="search-input-group-text">
+                <i className="fas fa-search"></i>
+              </span>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search games by title or developer..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
-        </div>
-        <div className="col-md-3">
-          <select
-            className="form-select"
-            value={genreFilter}
-            onChange={(e) => setGenreFilter(e.target.value)}
-          >
-            <option value="">All Genres</option>
-            {genres.map((genre, index) => (
-              <option key={index} value={genre}>
-                {genre}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="col-md-3">
-          <select
-            className="form-select"
-            value={platformFilter}
-            onChange={(e) => setPlatformFilter(e.target.value)}
-          >
-            <option value="">All Platforms</option>
-            {platforms.map((platform, index) => (
-              <option key={index} value={platform}>
-                {platform}
-              </option>
-            ))}
-          </select>
+          <div className="col-md-3 mb-3 mb-md-0">
+            <select
+              className="search-select"
+              value={genreFilter}
+              onChange={(e) => setGenreFilter(e.target.value)}
+            >
+              <option value="">All Genres</option>
+              {genres.map((genre, index) => (
+                <option key={index} value={genre}>
+                  {genre}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-md-3">
+            <select
+              className="search-select"
+              value={platformFilter}
+              onChange={(e) => setPlatformFilter(e.target.value)}
+            >
+              <option value="">All Platforms</option>
+              {platforms.map((platform, index) => (
+                <option key={index} value={platform}>
+                  {platform}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Games Grid */}
       {filteredGames.length > 0 ? (
         <>
-          <div className="row mb-3">
-            <div className="col-12">
-              <p className="text-muted">
-                Showing {filteredGames.length} of {safeGames.length} games
-              </p>
-            </div>
+          <div className="search-results-info">
+            <i className="fas fa-info-circle"></i>
+            Showing {filteredGames.length} of {safeGames.length} games
           </div>
           <div className="row">
             {filteredGames.map((game) => (
@@ -220,24 +224,27 @@ const Games = () => {
           </div>
         </>
       ) : (
-        <div className="text-center py-5">
-          <i className="fas fa-search fa-3x text-muted mb-3"></i>
-          <h4>No games found</h4>
-          <p className="text-muted">
+        <div className="no-results-container">
+          <div className="no-results-icon">
+            <i className="fas fa-search"></i>
+          </div>
+          <h4 className="no-results-title">No games found</h4>
+          <p className="no-results-text">
             {searchTerm || genreFilter || platformFilter 
-              ? 'Try adjusting your search criteria' 
+              ? 'Try adjusting your search criteria to find more games' 
               : 'No games are available at the moment'
             }
           </p>
           {(searchTerm || genreFilter || platformFilter) && (
             <button 
-              className="btn btn-outline-primary"
+              className="clear-filters-btn"
               onClick={() => {
                 setSearchTerm('');
                 setGenreFilter('');
                 setPlatformFilter('');
               }}
             >
+              <i className="fas fa-times"></i>
               Clear Filters
             </button>
           )}

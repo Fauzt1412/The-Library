@@ -4,6 +4,7 @@ import { booksAPI } from '../services/api';
 import FavoriteButton from '../components/FavoriteButton';
 import { handleImageError, getLocalPlaceholder } from '../utils/placeholderUtils';
 import { getImageUrl } from '../utils/imageUtils';
+import '../styles/search-components.css';
 
 const Books = () => {
   const [books, setBooks] = useState([]);
@@ -118,46 +119,49 @@ const Books = () => {
       )}
 
       {/* Search and Filter Section */}
-      <div className="row mb-4">
-        <div className="col-md-8">
-          <div className="input-group">
-            <span className="input-group-text">
-              <i className="fas fa-search"></i>
-            </span>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Search books by title or author..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+      <div className="search-filter-container">
+        <div className="search-filter-title">
+          <i className="fas fa-search"></i>
+          Search & Filter Books
         </div>
-        <div className="col-md-4">
-          <select
-            className="form-select"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <option value="">All Categories</option>
-            {categories.map((category, index) => (
-              <option key={index} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+        <div className="row">
+          <div className="col-md-8 mb-3 mb-md-0">
+            <div className="search-input-group">
+              <span className="search-input-group-text">
+                <i className="fas fa-search"></i>
+              </span>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search books by title or author..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="col-md-4">
+            <select
+              className="search-select"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="">All Categories</option>
+              {categories.map((category, index) => (
+                <option key={index} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Books Grid */}
       {filteredBooks.length > 0 ? (
         <>
-          <div className="row mb-3">
-            <div className="col-12">
-              <p className="text-muted">
-                Showing {filteredBooks.length} of {safeBooks.length} books
-              </p>
-            </div>
+          <div className="search-results-info">
+            <i className="fas fa-info-circle"></i>
+            Showing {filteredBooks.length} of {safeBooks.length} books
           </div>
           <div className="row">
             {filteredBooks.map((book) => (
@@ -202,23 +206,26 @@ const Books = () => {
           </div>
         </>
       ) : (
-        <div className="text-center py-5">
-          <i className="fas fa-search fa-3x text-muted mb-3"></i>
-          <h4>No books found</h4>
-          <p className="text-muted">
+        <div className="no-results-container">
+          <div className="no-results-icon">
+            <i className="fas fa-search"></i>
+          </div>
+          <h4 className="no-results-title">No books found</h4>
+          <p className="no-results-text">
             {searchTerm || categoryFilter 
-              ? 'Try adjusting your search criteria' 
+              ? 'Try adjusting your search criteria to find more books' 
               : 'No books are available at the moment'
             }
           </p>
           {(searchTerm || categoryFilter) && (
             <button 
-              className="btn btn-outline-primary"
+              className="clear-filters-btn"
               onClick={() => {
                 setSearchTerm('');
                 setCategoryFilter('');
               }}
             >
+              <i className="fas fa-times"></i>
               Clear Filters
             </button>
           )}

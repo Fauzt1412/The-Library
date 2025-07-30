@@ -20,6 +20,11 @@ const MyContent = () => {
   const [changeSummary, setChangeSummary] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [contentToDelete, setContentToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   useEffect(() => {
     if (isAuthenticated) {
       fetchData();
@@ -34,8 +39,16 @@ const MyContent = () => {
         editRequestsAPI.getMy()
       ]);
       
-      setContent(contentResponse.data.data || []);
-      setEditRequests(editRequestsResponse.data.data || []);
+      // Safely extract data with fallbacks
+      const contentData = contentResponse?.data?.data || contentResponse?.data || [];
+      const editRequestsData = editRequestsResponse?.data?.data || editRequestsResponse?.data || [];
+      
+      // Filter out any null/undefined items
+      const validContent = Array.isArray(contentData) ? contentData.filter(item => item && item._id) : [];
+      const validEditRequests = Array.isArray(editRequestsData) ? editRequestsData.filter(req => req && req._id) : [];
+      
+      setContent(validContent);
+      setEditRequests(validEditRequests);
     } catch (error) {
       console.error('Error fetching data:', error);
       setError('Failed to fetch your content: ' + (error.response?.data?.error || error.message));
@@ -211,9 +224,80 @@ const MyContent = () => {
     }
   };
   
+  const handleDeleteContent = async () => {
+    if (!contentToDelete || !contentToDelete._id) {
+      setError('Invalid content selected for deletion.');
+      return;
+    }
+    
+    setIsDeleting(true);
+    try {
+      console.log('🗑️ Deleting content:', contentToDelete._id);
+      
+      // Call the appropriate API based on content type
+      let response;
+      if (contentToDelete.contentType === 'book') {
+        // Assuming there's a delete API for books
+        response = await fetch(`/api/books/${contentToDelete._id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } else {
+        // Assuming there's a delete API for games
+        response = await fetch(`/api/games/${contentToDelete._id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete content');
+      }
+      
+      console.log('✅ Content deleted successfully');
+      
+      setSuccess(`${contentToDelete.contentType === 'book' ? 'Book' : 'Game'} "${contentToDelete.title}" has been deleted successfully.`);
+      setShowDeleteModal(false);
+      setContentToDelete(null);
+      
+      // Refresh the content list
+      fetchData();
+      
+    } catch (error) {
+      console.error('❌ Error deleting content:', error);
+      
+      let errorMessage = 'Failed to delete content: ';
+      if (error.message.includes('403')) {
+        errorMessage += 'You can only delete your own content.';
+      } else if (error.message.includes('404')) {
+        errorMessage += 'Content not found. It may have already been deleted.';
+      } else if (error.message.includes('500')) {
+        errorMessage += 'Server error. Please try again later.';
+      } else {
+        errorMessage += error.message || 'Unknown error occurred';
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+  
+  const confirmDelete = (item) => {
+    setContentToDelete(item);
+    setShowDeleteModal(true);
+  };
+  
   const getPendingEditRequest = (contentId) => {
     return editRequests.find(req => 
-      req.contentId._id === contentId && req.status === 'pending'
+      req.contentId && req.contentId._id === contentId && req.status === 'pending'
     );
   };
   
@@ -293,6 +377,11 @@ const MyContent = () => {
               ) : (
                 <div className="row">
                   {content.map(item => {
+                    // Safety check for item
+                    if (!item || !item._id) {
+                      return null;
+                    }
+                    
                     const pendingEdit = getPendingEditRequest(item._id);
                     return (
                       <div key={item._id} className="col-md-6 col-lg-4 mb-4">
@@ -310,14 +399,14 @@ const MyContent = () => {
                             </span>
                           </div>
                           <div className="card-body d-flex flex-column">
-                            <h6 className="card-title">{item.title}</h6>
+                            <h6 className="card-title">{item.title || 'Untitled'}</h6>
                             <p className="text-muted small mb-2">
-                              By: {item.contentType === 'book' ? item.author : item.developer}
+                              By: {item.contentType === 'book' ? (item.author || 'Unknown Author') : (item.developer || 'Unknown Developer')}
                             </p>
                             <p className="card-text small text-muted flex-grow-1">
-                              {item.description.length > 100 ? 
+                              {item.description && item.description.length > 100 ? 
                                 item.description.substring(0, 100) + '...' : 
-                                item.description
+                                (item.description || 'No description available')
                               }
                             </p>
                             <div className="mt-auto">
@@ -326,7 +415,7 @@ const MyContent = () => {
 
                                 </small>
                                 <small className="text-muted">
-                                  {new Date(item.createdAt).toLocaleDateString()}
+                                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Unknown date'}
                                 </small>
                               </div>
                               
@@ -339,14 +428,24 @@ const MyContent = () => {
                               )}
                               
                               <div className="mt-2">
-                                <button
-                                  className="btn btn-primary btn-sm w-100"
-                                  onClick={() => handleEdit(item)}
-                                  disabled={!!pendingEdit}
-                                >
-                                  <i className="fas fa-edit me-2"></i>
-                                  {pendingEdit ? 'Edit Pending' : 'Request Edit'}
-                                </button>
+                                <div className="d-flex gap-2">
+                                  <button
+                                    className="btn btn-primary btn-sm flex-fill"
+                                    onClick={() => handleEdit(item)}
+                                    disabled={!!pendingEdit}
+                                  >
+                                    <i className="fas fa-edit me-2"></i>
+                                    {pendingEdit ? 'Edit Pending' : 'Request Edit'}
+                                  </button>
+                                  <button
+                                    className="btn btn-danger btn-sm"
+                                    onClick={() => confirmDelete(item)}
+                                    title="Delete this content"
+                                    disabled={!!pendingEdit}
+                                  >
+                                    <i className="fas fa-trash"></i>
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -369,39 +468,46 @@ const MyContent = () => {
                 </h5>
               </div>
               <div className="card-body">
-                {editRequests.map(request => (
-                  <div key={request._id} className="card mb-3">
-                    <div className="card-body">
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                          <h6 className="mb-1">
-                            <i className={`fas ${request.contentType === 'book' ? 'fa-book' : 'fa-gamepad'} me-2`}></i>
-                            {request.contentId?.title}
-                          </h6>
-                          <p className="text-muted mb-2">{request.changeSummary}</p>
-                          <small className="text-muted">
-                            Submitted: {new Date(request.createdAt).toLocaleString()}
-                          </small>
-                          {request.reviewedAt && (
-                            <small className="text-muted d-block">
-                              Reviewed: {new Date(request.reviewedAt).toLocaleString()}
-                            </small>
-                          )}
-                          {request.reviewNotes && (
-                            <div className="mt-2">
+                  {editRequests.map(request => {
+                    // Safety check for request
+                    if (!request || !request._id) {
+                      return null;
+                    }
+                    
+                    return (
+                      <div key={request._id} className="card mb-3">
+                        <div className="card-body">
+                          <div className="d-flex justify-content-between align-items-start">
+                            <div>
+                              <h6 className="mb-1">
+                                <i className={`fas ${request.contentType === 'book' ? 'fa-book' : 'fa-gamepad'} me-2`}></i>
+                                {request.contentId?.title || 'Content Deleted'}
+                              </h6>
+                              <p className="text-muted mb-2">{request.changeSummary || 'No summary provided'}</p>
                               <small className="text-muted">
-                                <strong>Review Notes:</strong> {request.reviewNotes}
+                                Submitted: {request.createdAt ? new Date(request.createdAt).toLocaleString() : 'Unknown date'}
                               </small>
+                              {request.reviewedAt && (
+                                <small className="text-muted d-block">
+                                  Reviewed: {new Date(request.reviewedAt).toLocaleString()}
+                                </small>
+                              )}
+                              {request.reviewNotes && (
+                                <div className="mt-2">
+                                  <small className="text-muted">
+                                    <strong>Review Notes:</strong> {request.reviewNotes}
+                                  </small>
+                                </div>
+                              )}
                             </div>
-                          )}
+                            <span className={`badge ${getStatusBadge(request.status || 'unknown')}`}>
+                              {request.status ? request.status.charAt(0).toUpperCase() + request.status.slice(1) : 'Unknown'}
+                            </span>
+                          </div>
                         </div>
-                        <span className={`badge ${getStatusBadge(request.status)}`}>
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                        </span>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  }).filter(Boolean)}
               </div>
             </div>
           )}
@@ -763,6 +869,110 @@ const MyContent = () => {
                     <>
                       <i className="fas fa-paper-plane me-2"></i>
                       Submit Edit Request
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && contentToDelete && (
+        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header bg-danger text-white">
+                <h5 className="modal-title">
+                  <i className="fas fa-exclamation-triangle me-2"></i>
+                  Confirm Deletion
+                </h5>
+                <button 
+                  type="button" 
+                  className="btn-close btn-close-white" 
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setContentToDelete(null);
+                  }}
+                  disabled={isDeleting}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <div className="alert alert-warning">
+                  <i className="fas fa-exclamation-triangle me-2"></i>
+                  <strong>Warning:</strong> This action cannot be undone!
+                </div>
+                
+                <p className="mb-3">
+                  Are you sure you want to permanently delete this {contentToDelete.contentType}?
+                </p>
+                
+                <div className="card">
+                  <div className="card-body">
+                    <div className="d-flex align-items-center">
+                      <img 
+                        src={getImageUrl(
+                          contentToDelete.contentType === 'book' ? contentToDelete.Coverpage : contentToDelete.coverImage, 
+                          contentToDelete.contentType
+                        )}
+                        alt={contentToDelete.title}
+                        className="me-3"
+                        style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '4px' }}
+                        onError={(e) => handleImageError(e, 'noImage')}
+                      />
+                      <div>
+                        <h6 className="mb-1">{contentToDelete.title}</h6>
+                        <p className="text-muted mb-0 small">
+                          By: {contentToDelete.contentType === 'book' ? contentToDelete.author : contentToDelete.developer}
+                        </p>
+                        <span className={`badge ${contentToDelete.contentType === 'book' ? 'bg-info' : 'bg-success'} mt-1`}>
+                          {contentToDelete.contentType === 'book' ? 'Book' : 'Game'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-3">
+                  <p className="text-muted small">
+                    <strong>Note:</strong> Deleting this content will:
+                  </p>
+                  <ul className="text-muted small">
+                    <li>Remove it from the public library</li>
+                    <li>Cancel any pending edit requests</li>
+                    <li>Remove it from users' favorites</li>
+                    <li>Permanently delete all associated data</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setContentToDelete(null);
+                  }}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-danger"
+                  onClick={handleDeleteContent}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-trash me-2"></i>
+                      Delete Permanently
                     </>
                   )}
                 </button>

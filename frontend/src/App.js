@@ -4,9 +4,11 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { FavoritesProvider } from './context/FavoritesContext';
 import { SidebarProvider } from './context/SidebarContext';
+import { ChatProvider } from './context/ChatContext';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import FloatingMenuButton from './components/FloatingMenuButton';
+import FloatingChat from './components/FloatingChat';
 import MainLayout from './components/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
@@ -29,6 +31,8 @@ import './styles/theme.css';
 import './styles/sidebar.css';
 import './styles/floating-menu.css';
 import './styles/UploadToggle.css';
+import './styles/floating-chat.css';
+import './styles/form-components.css';
 
 function App() {
   return (
@@ -37,11 +41,13 @@ function App() {
         <AuthProvider>
           <FavoritesProvider>
             <SidebarProvider>
+              <ChatProvider>
               <Router>
               <div className="App">
                 <Navbar />
                 <Sidebar />
                 <FloatingMenuButton />
+                <FloatingChat />
                 <MainLayout>
                   <Routes>
                     <Route path="/" element={<Home />} />
@@ -69,6 +75,7 @@ function App() {
                 </MainLayout>
               </div>
               </Router>
+              </ChatProvider>
             </SidebarProvider>
           </FavoritesProvider>
         </AuthProvider>
