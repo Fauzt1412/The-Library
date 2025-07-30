@@ -12,9 +12,11 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
+    
+    // Safely handle potential null values
     this.setState({
-      error: error,
-      errorInfo: errorInfo
+      error: error || new Error('Unknown error occurred'),
+      errorInfo: errorInfo || { componentStack: 'No component stack available' }
     });
   }
 
@@ -29,7 +31,10 @@ class ErrorBoundary extends React.Component {
               <summary>Error Details</summary>
               {this.state.error && this.state.error.toString()}
               <br />
-              {this.state.errorInfo.componentStack}
+              {this.state.errorInfo && this.state.errorInfo.componentStack ? 
+                this.state.errorInfo.componentStack : 
+                'No component stack available'
+              }
             </details>
             <button 
               className="btn btn-primary mt-3" 

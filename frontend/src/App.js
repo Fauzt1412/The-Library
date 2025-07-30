@@ -4,11 +4,11 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { FavoritesProvider } from './context/FavoritesContext';
 import { SidebarProvider } from './context/SidebarContext';
-import { ChatProvider } from './context/ChatContext';
+import { SafeChatProvider } from './context/SafeChatProvider';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import FloatingMenuButton from './components/FloatingMenuButton';
-import FloatingChat from './components/FloatingChat';
+import SafeFloatingChat from './components/SafeFloatingChat';
 import MainLayout from './components/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
@@ -42,12 +42,12 @@ function App() {
           <FavoritesProvider>
             <SidebarProvider>
               <Router>
-                <ChatProvider>
+                <SafeChatProvider>
               <div className="App">
                 <Navbar />
                 <Sidebar />
                 <FloatingMenuButton />
-                <FloatingChat />
+                <SafeFloatingChat />
                 <MainLayout>
                   <Routes>
                     <Route path="/" element={<Home />} />
@@ -74,7 +74,7 @@ function App() {
                   </Routes>
                 </MainLayout>
               </div>
-                </ChatProvider>
+                </SafeChatProvider>
               </Router>
             </SidebarProvider>
           </FavoritesProvider>

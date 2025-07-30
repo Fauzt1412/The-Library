@@ -13,14 +13,20 @@ export const useChat = () => {
 };
 
 export const ChatProvider = ({ children }) => {
-  // Safely get user with error handling
+  // Safely get user with comprehensive error handling
   let user = null;
+  let authContextAvailable = false;
+  
   try {
     const authContext = useAuth();
-    user = authContext?.user || null;
+    if (authContext && typeof authContext === 'object') {
+      user = authContext.user || null;
+      authContextAvailable = true;
+    }
   } catch (error) {
-    console.warn('AuthContext not available in ChatProvider:', error);
+    console.warn('AuthContext not available in ChatProvider:', error.message || error);
     user = null;
+    authContextAvailable = false;
   }
   const [messages, setMessages] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -236,24 +242,40 @@ export const ChatProvider = ({ children }) => {
   };
 
   const joinChat = (user) => {
-    if (!user || isUserInChat) return;
+    if (!user || isUserInChat) {
+      console.log('Cannot join chat: user not provided or already in chat');
+      return;
+    }
     
     try {
+      // Validate user object
+      if (typeof user !== 'object' || (!user._id && !user.id)) {
+        console.error('Invalid user object provided to joinChat');
+        return;
+      }
+
       if (!chatService || typeof chatService.connect !== 'function') {
         console.error('Chat service not available');
         return;
       }
 
+      // Safely extract user data
+      const userData = {
+        id: user._id || user.id || 'anonymous-' + Date.now(),
+        username: user.username || user.email || user.name || 'Anonymous'
+      };
+
+      console.log('Attempting to join chat with user data:', userData);
+
       // Connect to chat service
-      chatService.connect({
-        id: user._id || user.id,
-        username: user.username || user.email || 'Anonymous'
-      });
+      chatService.connect(userData);
       
       setIsUserInChat(true);
-      console.log('User joined chat:', user.username);
+      console.log('User successfully joined chat:', userData.username);
     } catch (error) {
-      console.error('Error joining chat:', error);
+      console.error('Error joining chat:', error.message || error);
+      // Don't throw the error, just log it
+      setIsUserInChat(false);
     }
   };
 
