@@ -4,57 +4,7 @@ import '../styles/floating-chat.css';
 
 // Enhanced safe floating chat component with all original features
 const SafeFloatingChat = () => {
-  // Check if we're in production without a backend server
-  const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-  const hasBackendUrl = process.env.REACT_APP_SERVER_URL;
-  const shouldDisableChat = isProduction && !hasBackendUrl;
-  
-  // If chat should be disabled in production, show a placeholder
-  if (shouldDisableChat) {
-    return (
-      <div 
-        className="floating-chat-toggle disabled"
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          width: '60px',
-          height: '60px',
-          background: 'linear-gradient(135deg, #6c757d, #5a6268)',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'not-allowed',
-          boxShadow: '0 4px 20px rgba(108, 117, 125, 0.3)',
-          zIndex: 1000,
-          opacity: 0.7
-        }}
-        title="Chat is currently unavailable in production. Backend server needed."
-      >
-        <i className="fas fa-comments" style={{ color: 'white', fontSize: '24px' }}></i>
-        <div 
-          style={{
-            position: 'absolute',
-            top: '-8px',
-            right: '-8px',
-            background: '#dc3545',
-            color: 'white',
-            borderRadius: '50%',
-            width: '20px',
-            height: '20px',
-            fontSize: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold'
-          }}
-        >
-          !
-        </div>
-      </div>
-    );
-  }
+  // All React hooks must be called before any conditional returns
   const [isOpen, setIsOpen] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -622,6 +572,11 @@ const SafeFloatingChat = () => {
     );
   };
   
+  // Check if we're in production without a backend server
+  const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+  const hasBackendUrl = process.env.REACT_APP_SERVER_URL;
+  const shouldDisableChat = isProduction && !hasBackendUrl;
+  
   // Error fallback
   if (hasError) {
     return (
@@ -648,6 +603,53 @@ const SafeFloatingChat = () => {
       >
         <i className="fas fa-exclamation-triangle"></i>
         Chat Error - Click to Reload
+      </div>
+    );
+  }
+  
+  // If chat should be disabled in production, show a placeholder
+  if (shouldDisableChat) {
+    return (
+      <div 
+        className="floating-chat-toggle disabled"
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          width: '60px',
+          height: '60px',
+          background: 'linear-gradient(135deg, #6c757d, #5a6268)',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'not-allowed',
+          boxShadow: '0 4px 20px rgba(108, 117, 125, 0.3)',
+          zIndex: 1000,
+          opacity: 0.7
+        }}
+        title="Chat is currently unavailable in production. Backend server needed."
+      >
+        <i className="fas fa-comments" style={{ color: 'white', fontSize: '24px' }}></i>
+        <div 
+          style={{
+            position: 'absolute',
+            top: '-8px',
+            right: '-8px',
+            background: '#dc3545',
+            color: 'white',
+            borderRadius: '50%',
+            width: '20px',
+            height: '20px',
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold'
+          }}
+        >
+          !
+        </div>
       </div>
     );
   }
