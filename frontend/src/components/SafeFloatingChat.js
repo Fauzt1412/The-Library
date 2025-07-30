@@ -8,7 +8,7 @@ const SafeFloatingChat = () => {
   const isProduction = typeof window !== 'undefined' && 
     window.location.hostname !== 'localhost' && 
     window.location.hostname !== '127.0.0.1';
-  const hasBackendUrl = process.env.REACT_APP_SERVER_URL;
+  const hasBackendUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL;
   const shouldDisableChat = isProduction && !hasBackendUrl;
   
   // All React hooks must be called before any conditional returns
@@ -55,14 +55,14 @@ const SafeFloatingChat = () => {
       return;
     }
     
-    // Determine server URL based on environment
+    // Determine server URL based on environment (use same as other APIs)
     let serverUrl;
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       // Development environment
-      serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
+      serverUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
     } else {
-      // Production environment - you need to deploy your backend
-      serverUrl = process.env.REACT_APP_SERVER_URL || 'https://your-backend-server.onrender.com';
+      // Production environment - use same backend as other APIs
+      serverUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL;
     }
     
     console.log('🌐 Connecting to server:', serverUrl);
