@@ -30,6 +30,8 @@ const SafeFloatingChat = () => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
   
   const messagesEndRef = useRef(null);
   const chatInputRef = useRef(null);
@@ -60,8 +62,13 @@ const SafeFloatingChat = () => {
       
       newSocket.on('connect_error', (error) => {
         console.error('❌ Connection error:', error);
-        setConnectionError('Failed to connect to chat server');
+        setConnectionError('Server not running. Please start backend server.');
         setIsConnected(false);
+        
+        // Show user-friendly error message
+        if (!hasError) {
+          console.log('🔧 To fix: cd Server && npm run dev');
+        }
       });
       
       // Real-time message events
@@ -270,6 +277,26 @@ const SafeFloatingChat = () => {
   
   const handleCloseWelcomePopup = () => {
     setShowWelcomePopup(false);
+  };
+  
+  const retryConnection = () => {
+    if (isRetrying) return;
+    
+    setIsRetrying(true);
+    setRetryCount(prev => prev + 1);
+    
+    console.log(`🔄 Retrying connection (attempt ${retryCount + 1})...`);
+    
+    // Disconnect existing socket if any
+    if (socket) {
+      socket.disconnect();
+    }
+    
+    // Retry after a short delay
+    setTimeout(() => {
+      setIsRetrying(false);
+      // The useEffect will create a new connection
+    }, 2000);
   };
   
   const getOnlineUsersCount = () => {
@@ -620,8 +647,20 @@ const SafeFloatingChat = () => {
                 <div className="online-indicator">
                   <span className={`online-dot ${isConnected ? 'connected' : 'disconnected'}`}></span>
                   <span className="online-text">
-                    {isConnected ? 'Connected' : connectionError ? 'Error' : 'Connecting...'}
+                    {isConnected ? 'Connected' : 
+                     isRetrying ? 'Retrying...' :
+                     connectionError ? 'Disconnected' : 'Connecting...'}
                   </span>
+                  {connectionError && !isConnected && (
+                    <button 
+                      className="retry-connection-btn"
+                      onClick={retryConnection}
+                      disabled={isRetrying}
+                      title="Retry connection"
+                    >
+                      <i className={`fas ${isRetrying ? 'fa-spinner fa-spin' : 'fa-redo'}`}></i>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
