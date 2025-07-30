@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import io from 'socket.io-client';
 import '../styles/floating-chat.css';
 
 // Enhanced safe floating chat component with all original features
@@ -26,11 +27,119 @@ const SafeFloatingChat = () => {
   const [resizeHandle, setResizeHandle] = useState(null);
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
   const [hasShownWelcome, setHasShownWelcome] = useState(false);
+  const [socket, setSocket] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState(null);
   
   const messagesEndRef = useRef(null);
   const chatInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const chatInfoRef = useRef(null);
+  
+  // Socket.IO connection
+  useEffect(() => {
+    const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
+    
+    try {
+      const newSocket = io(serverUrl, {
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        forceNew: true
+      });
+      
+      newSocket.on('connect', () => {
+        console.log('✅ Connected to chat server');
+        setIsConnected(true);
+        setConnectionError(null);
+      });
+      
+      newSocket.on('disconnect', () => {
+        console.log('❌ Disconnected from chat server');
+        setIsConnected(false);
+      });
+      
+      newSocket.on('connect_error', (error) => {
+        console.error('❌ Connection error:', error);
+        setConnectionError('Failed to connect to chat server');
+        setIsConnected(false);
+      });
+      
+      // Real-time message events
+      newSocket.on('new-message', (message) => {
+        console.log('📨 New message received:', message);
+        setMessages(prev => [...prev, message]);
+        
+        // Update unread count if chat is closed
+        if (!isOpen) {
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+      
+      newSocket.on('recent-messages', (messages) => {
+        console.log('📋 Recent messages loaded:', messages.length);
+        setMessages(messages);
+      });
+      
+      newSocket.on('user-joined', (data) => {
+        console.log('👋 User joined:', data.username);
+        const joinMessage = {
+          _id: 'join-' + Date.now(),
+          username: 'System',
+          message: `${data.username} joined the chat`,
+          timestamp: data.timestamp,
+          messageType: 'system'
+        };
+        setMessages(prev => [...prev, joinMessage]);
+      });
+      
+      newSocket.on('user-left', (data) => {
+        console.log('👋 User left:', data.username);
+        const leaveMessage = {
+          _id: 'leave-' + Date.now(),
+          username: 'System',
+          message: `${data.username} left the chat`,
+          timestamp: data.timestamp,
+          messageType: 'system'
+        };
+        setMessages(prev => [...prev, leaveMessage]);
+      });
+      
+      newSocket.on('online-users-updated', (data) => {
+        console.log('👥 Online users updated:', data.count);
+        setActiveUsers(data.users.map(user => ({
+          id: user.userId,
+          username: user.username,
+          status: 'online',
+          role: user.role
+        })));
+      });
+      
+      newSocket.on('message-deleted', (data) => {
+        console.log('🗑️ Message deleted:', data.messageId);
+        setMessages(prev => prev.filter(msg => msg._id !== data.messageId));
+      });
+      
+      newSocket.on('chat-cleared', () => {
+        console.log('🧹 Chat cleared by admin');
+        setMessages([]);
+      });
+      
+      newSocket.on('error', (error) => {
+        console.error('❌ Socket error:', error);
+        alert(error.message || 'Chat error occurred');
+      });
+      
+      setSocket(newSocket);
+      
+      return () => {
+        console.log('🔌 Cleaning up socket connection');
+        newSocket.disconnect();
+      };
+    } catch (error) {
+      console.error('❌ Failed to initialize socket:', error);
+      setConnectionError('Failed to initialize chat connection');
+    }
+  }, [isOpen]);
   
   // Try to get user from localStorage or context safely
   useEffect(() => {
@@ -40,9 +149,6 @@ const SafeFloatingChat = () => {
       if (savedUser) {
         setUser(JSON.parse(savedUser));
       }
-      
-      // Initialize with empty messages - welcome will be shown as popup
-      setMessages([]);
     } catch (error) {
       console.warn('Error initializing chat:', error);
       setHasError(true);
@@ -139,8 +245,14 @@ const SafeFloatingChat = () => {
       return;
     }
 
+    if (!socket || !isConnected) {
+      alert('Chat server is not connected.');
+      return;
+    }
+
     if (window.confirm('Are you sure you want to delete this message?')) {
-      setMessages(prev => prev.filter(msg => msg._id !== messageId));
+      socket.emit('delete-message', { messageId });
+      console.log('🗑️ Deleting message via Socket.IO:', messageId);
     }
   };
 
@@ -237,37 +349,16 @@ const SafeFloatingChat = () => {
   };
   
   const handleJoinChat = () => {
-    if (user && !isUserInChat) {
+    if (user && !isUserInChat && socket && isConnected) {
       setIsUserInChat(true);
       
-      // Add current user to active users list
-      const currentUser = {
-        id: user.id || user.email || Date.now().toString(),
-        username: user.username || user.email || 'Anonymous',
-        status: 'online',
-        joinedAt: new Date(),
-        role: user.role || 'user'
-      };
-      
-      setActiveUsers(prev => {
-        // Check if user already exists to avoid duplicates
-        const existingUser = prev.find(u => u.id === currentUser.id);
-        if (existingUser) {
-          // Update existing user status
-          return prev.map(u => u.id === currentUser.id ? { ...u, status: 'online' } : u);
-        }
-        // Add new user
-        return [...prev, currentUser];
+      // Join chat via Socket.IO
+      socket.emit('join-chat', {
+        userId: user._id || user.id,
+        username: user.username || user.email || 'Anonymous'
       });
       
-      const joinMessage = {
-        _id: 'join-' + Date.now(),
-        username: 'System',
-        message: `${user.username || user.email || 'User'} joined the chat`,
-        timestamp: new Date(),
-        messageType: 'system'
-      };
-      setMessages(prev => [...prev, joinMessage]);
+      console.log('🚀 Joining chat via Socket.IO');
       
       // Show welcome popup if not shown before
       if (!hasShownWelcome) {
@@ -279,47 +370,39 @@ const SafeFloatingChat = () => {
           setShowWelcomePopup(false);
         }, 15000);
       }
+    } else if (!socket || !isConnected) {
+      alert('Chat server is not connected. Please try again.');
     }
   };
   
   const handleLeaveChat = () => {
-    if (user && isUserInChat) {
+    if (user && isUserInChat && socket) {
       setIsUserInChat(false);
       
-      // Remove current user from active users list
-      const userId = user.id || user.email || Date.now().toString();
-      setActiveUsers(prev => prev.filter(u => u.id !== userId));
+      // Disconnect from Socket.IO will automatically trigger user-left event
+      socket.disconnect();
       
-      const leaveMessage = {
-        _id: 'leave-' + Date.now(),
-        username: 'System',
-        message: `${user.username || user.email || 'User'} left the chat`,
-        timestamp: new Date(),
-        messageType: 'system'
-      };
-      setMessages(prev => [...prev, leaveMessage]);
+      console.log('👋 Leaving chat via Socket.IO');
     }
   };
   
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim() || !user || !socket || !isConnected) return;
     
     setIsLoading(true);
     
     try {
-      const messageData = {
-        _id: Date.now().toString(),
-        username: user.username || user.email || 'Anonymous',
+      // Send message via Socket.IO
+      socket.emit('send-message', {
         message: newMessage.trim(),
-        timestamp: new Date(),
         messageType: user.role === 'admin' ? 'admin' : 'user',
-        isAdmin: user.role === 'admin',
         isNotice: isNoticeMode && user.role === 'admin'
-      };
+      });
       
-      setMessages(prev => [...prev, messageData]);
+      console.log('📤 Sending message via Socket.IO');
+      
       setNewMessage('');
       
       // Reset notice mode after sending
@@ -335,6 +418,7 @@ const SafeFloatingChat = () => {
       }, 100);
     } catch (error) {
       console.error('Error sending message:', error);
+      alert('Failed to send message. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -534,8 +618,10 @@ const SafeFloatingChat = () => {
                   <i className="fas fa-sliders-h"></i>
                 </button>
                 <div className="online-indicator">
-                  <span className="online-dot"></span>
-                  <span className="online-text">Online</span>
+                  <span className={`online-dot ${isConnected ? 'connected' : 'disconnected'}`}></span>
+                  <span className="online-text">
+                    {isConnected ? 'Connected' : connectionError ? 'Error' : 'Connecting...'}
+                  </span>
                 </div>
               </div>
             </div>
