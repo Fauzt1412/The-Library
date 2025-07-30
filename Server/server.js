@@ -2,10 +2,16 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const http = require('http');
 require('dotenv').config();
 const app = express();
+const server = http.createServer(app);
 const port = process.env.PORT || 1412;
 const databaseURL = process.env.DATABASE_URL || 'mongodb://localhost:27017/Storage_database_SYS';
+
+// Initialize Socket.IO service
+const socketService = require('./services/socketService');
+socketService.initialize(server);
 
 console.log(`🚀 Starting server on port ${port}`);
 console.log(`📊 Database URL: ${databaseURL}`);
@@ -116,14 +122,22 @@ const userRoutes = require('./API/routes/UserRoute');
 app.use('/API', userRoutes);
 console.log('✅ User routes loaded');
 
+const chatRoutes = require('./API/routes/ChatRoute');
+app.use('/API', chatRoutes);
+console.log('✅ Chat routes loaded');
+
 console.log('🎯 All routes configured successfully');
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`🚀 Server is running on http://localhost:${port}`);
+    console.log('🔌 Socket.IO enabled for real-time chat');
     console.log('📋 Available endpoints:');
     console.log('   - POST /API/login');
     console.log('   - POST /API/signup');
     console.log('   - GET  /API/favorites');
     console.log('   - GET  /API/user/profile');
     console.log('   - GET  /API/health');
+    console.log('   - GET  /API/chat/messages');
+    console.log('   - POST /API/chat/messages');
+    console.log('   - WebSocket: Real-time chat');
 });
