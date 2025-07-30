@@ -4,6 +4,13 @@ import '../styles/floating-chat.css';
 
 // Enhanced safe floating chat component with all original features
 const SafeFloatingChat = () => {
+  // Environment detection (safe to call before hooks)
+  const isProduction = typeof window !== 'undefined' && 
+    window.location.hostname !== 'localhost' && 
+    window.location.hostname !== '127.0.0.1';
+  const hasBackendUrl = process.env.REACT_APP_SERVER_URL;
+  const shouldDisableChat = isProduction && !hasBackendUrl;
+  
   // All React hooks must be called before any conditional returns
   const [isOpen, setIsOpen] = useState(false);
   const [newMessage, setNewMessage] = useState('');
@@ -41,6 +48,13 @@ const SafeFloatingChat = () => {
   
   // Socket.IO connection
   useEffect(() => {
+    // Don't attempt connection if chat is disabled
+    if (shouldDisableChat) {
+      console.log('🚫 Chat disabled in production - no backend URL configured');
+      setConnectionError('Chat unavailable in production');
+      return;
+    }
+    
     // Determine server URL based on environment
     let serverUrl;
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -160,7 +174,7 @@ const SafeFloatingChat = () => {
       console.error('❌ Failed to initialize socket:', error);
       setConnectionError('Failed to initialize chat connection');
     }
-  }, [isOpen]);
+  }, []); // Remove isOpen dependency to prevent reconnections
   
   // Try to get user from localStorage or context safely
   useEffect(() => {
@@ -571,11 +585,6 @@ const SafeFloatingChat = () => {
       </div>
     );
   };
-  
-  // Check if we're in production without a backend server
-  const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-  const hasBackendUrl = process.env.REACT_APP_SERVER_URL;
-  const shouldDisableChat = isProduction && !hasBackendUrl;
   
   // Error fallback
   if (hasError) {
