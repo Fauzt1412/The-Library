@@ -4,6 +4,57 @@ import '../styles/floating-chat.css';
 
 // Enhanced safe floating chat component with all original features
 const SafeFloatingChat = () => {
+  // Check if we're in production without a backend server
+  const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+  const hasBackendUrl = process.env.REACT_APP_SERVER_URL;
+  const shouldDisableChat = isProduction && !hasBackendUrl;
+  
+  // If chat should be disabled in production, show a placeholder
+  if (shouldDisableChat) {
+    return (
+      <div 
+        className="floating-chat-toggle disabled"
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          width: '60px',
+          height: '60px',
+          background: 'linear-gradient(135deg, #6c757d, #5a6268)',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'not-allowed',
+          boxShadow: '0 4px 20px rgba(108, 117, 125, 0.3)',
+          zIndex: 1000,
+          opacity: 0.7
+        }}
+        title="Chat is currently unavailable in production. Backend server needed."
+      >
+        <i className="fas fa-comments" style={{ color: 'white', fontSize: '24px' }}></i>
+        <div 
+          style={{
+            position: 'absolute',
+            top: '-8px',
+            right: '-8px',
+            background: '#dc3545',
+            color: 'white',
+            borderRadius: '50%',
+            width: '20px',
+            height: '20px',
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold'
+          }}
+        >
+          !
+        </div>
+      </div>
+    );
+  }
   const [isOpen, setIsOpen] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +91,17 @@ const SafeFloatingChat = () => {
   
   // Socket.IO connection
   useEffect(() => {
-    const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
+    // Determine server URL based on environment
+    let serverUrl;
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // Development environment
+      serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
+    } else {
+      // Production environment - you need to deploy your backend
+      serverUrl = process.env.REACT_APP_SERVER_URL || 'https://your-backend-server.onrender.com';
+    }
+    
+    console.log('🌐 Connecting to server:', serverUrl);
     
     try {
       const newSocket = io(serverUrl, {
@@ -62,13 +123,16 @@ const SafeFloatingChat = () => {
       
       newSocket.on('connect_error', (error) => {
         console.error('❌ Connection error:', error);
-        setConnectionError('Server not running. Please start backend server.');
-        setIsConnected(false);
         
-        // Show user-friendly error message
-        if (!hasError) {
+        if (isProduction) {
+          setConnectionError('Backend server not deployed. Chat unavailable in production.');
+          console.log('🔧 To fix: Deploy backend server and set REACT_APP_SERVER_URL');
+        } else {
+          setConnectionError('Server not running. Please start backend server.');
           console.log('🔧 To fix: cd Server && npm run dev');
         }
+        
+        setIsConnected(false);
       });
       
       // Real-time message events
