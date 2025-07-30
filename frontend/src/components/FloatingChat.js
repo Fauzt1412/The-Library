@@ -1,11 +1,63 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useChat } from '../context/ChatContext';
-import { useTheme } from '../context/ThemeContext';
 import ChatSettings from './ChatSettings';
 import '../styles/floating-chat.css';
 
+// Safe hook wrapper
+const useSafeContext = (hookFn, fallback) => {
+  try {
+    return hookFn();
+  } catch (error) {
+    console.warn('Context hook error:', error.message);
+    return fallback;
+  }
+};
+
 const FloatingChat = () => {
+  // Safe context usage
+  let user = null;
+  let chatData = {};
+  let themeData = {};
+  
+  try {
+    const { useAuth } = require('../context/AuthContext');
+    const authContext = useAuth();
+    user = authContext?.user || null;
+  } catch (error) {
+    console.warn('Auth context error:', error.message);
+  }
+  
+  try {
+    const { useChat } = require('../context/ChatContext');
+    chatData = useChat() || {};
+  } catch (error) {
+    console.warn('Chat context error:', error.message);
+  }
+  
+  try {
+    const { useTheme } = require('../context/ThemeContext');
+    themeData = useTheme() || {};
+  } catch (error) {
+    console.warn('Theme context error:', error.message);
+  }
+  
+  // Provide safe defaults
+  const {
+    messages = [],
+    addMessage = async () => null,
+    unreadCount = 0,
+    markAsRead = () => {},
+    activeUsers = [],
+    getOnlineUsersCount = () => 0,
+    joinChat = () => {},
+    leaveChat = () => {},
+    isUserInChat = false,
+    deleteMessage = async () => false,
+    clearMessages = async () => false,
+    chatSettings = { width: 350, height: 500, position: { bottom: 90, right: 20 } },
+    updateChatSettings = () => {}
+  } = chatData;
+  
+  const { theme = 'light', isDark = false } = themeData;
   const [isOpen, setIsOpen] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);

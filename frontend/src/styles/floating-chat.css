@@ -94,6 +94,10 @@
 /* Chat Window */
 .floating-chat-window {
   position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 350px;
+  height: 500px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 12px;
@@ -1349,7 +1353,7 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 8px 32px var(--card-shadow);
-  z-index: 1001;
+  z-index: 1050;
   overflow: hidden;
   animation: chatInfoSlideIn 0.3s ease;
   backdrop-filter: blur(10px);
@@ -1644,7 +1648,7 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 8px 32px var(--card-shadow);
-  z-index: 1001;
+  z-index: 1050;
   overflow: hidden;
   animation: emojiPickerSlideIn 0.3s ease;
   backdrop-filter: blur(10px);
@@ -1852,6 +1856,7 @@
     width: 280px;
     max-height: 250px;
     right: -40px;
+    z-index: 1055;
   }
   
   .chat-info-header {
@@ -2537,18 +2542,285 @@
   }
 }
 
-/* Reduced motion support */
+/* Welcome Popup Styles */
+.welcome-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1060;
+  animation: welcomeOverlayFadeIn 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+@keyframes welcomeOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.welcome-popup {
+  background: var(--card-bg);
+  border: 2px solid #28a745;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(40, 167, 69, 0.3);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: welcomePopupSlideIn 0.4s ease;
+  position: relative;
+}
+
+@keyframes welcomePopupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.welcome-popup::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #28a745, #20c997, #28a745);
+  animation: welcomeShimmer 3s infinite;
+}
+
+@keyframes welcomeShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.welcome-popup-header {
+  padding: 20px 24px 16px;
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.05));
+  border-bottom: 1px solid rgba(40, 167, 69, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.welcome-popup-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #28a745;
+  display: flex;
+  align-items: center;
+  text-shadow: 0 1px 2px rgba(40, 167, 69, 0.1);
+}
+
+.welcome-popup-title .fa-heart {
+  color: #28a745;
+  animation: heartBeat 2s infinite;
+}
+
+.welcome-popup-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.welcome-popup-close:hover {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  transform: scale(1.1);
+}
+
+.welcome-popup-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.welcome-popup-message {
+  font-size: 16px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.welcome-popup-message .fa-book-open {
+  color: #17a2b8;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.welcome-popup-guidelines {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(40, 167, 69, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.welcome-popup-guidelines .fa-handshake {
+  color: #28a745;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.welcome-popup-footer {
+  text-align: center;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.welcome-popup-footer small {
+  color: var(--text-muted);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.welcome-popup-footer .fa-clock {
+  color: #ffc107;
+  animation: clockTick 1s infinite;
+}
+
+@keyframes clockTick {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(15deg);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .welcome-popup {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .welcome-popup-header {
+    padding: 16px 20px 12px;
+  }
+  
+  .welcome-popup-title {
+    font-size: 16px;
+  }
+  
+  .welcome-popup-content {
+    padding: 20px;
+    gap: 14px;
+  }
+  
+  .welcome-popup-message {
+    font-size: 15px;
+  }
+  
+  .welcome-popup-guidelines {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-popup {
+    width: 98%;
+    margin: 10px;
+  }
+  
+  .welcome-popup-header {
+    padding: 14px 16px 10px;
+  }
+  
+  .welcome-popup-title {
+    font-size: 15px;
+  }
+  
+  .welcome-popup-content {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .welcome-popup-message {
+    font-size: 14px;
+  }
+  
+  .welcome-popup-guidelines {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+  
+  .welcome-popup-footer small {
+    font-size: 12px;
+  }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .welcome-popup {
+  border-color: #28a745;
+  box-shadow: 0 20px 60px rgba(40, 167, 69, 0.4);
+}
+
+[data-theme="dark"] .welcome-popup-header {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(32, 201, 151, 0.08));
+  border-bottom-color: rgba(40, 167, 69, 0.3);
+}
+
+[data-theme="dark"] .welcome-popup-guidelines {
+  background: rgba(40, 167, 69, 0.1);
+}
+
+/* Reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .floating-chat-window,
   .floating-chat-window *,
   .floating-chat-toggle,
   .chat-tooltip,
-  .message {
+  .message,
+  .welcome-popup,
+  .welcome-popup-overlay {
     transition: none;
     animation: none;
   }
   
-  .online-dot {
+  .online-dot,
+  .welcome-popup-title .fa-heart,
+  .welcome-popup-footer .fa-clock {
     animation: none;
   }
 }
