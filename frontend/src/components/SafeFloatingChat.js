@@ -404,7 +404,12 @@ const SafeFloatingChat = () => {
   };
   
   const handleJoinChat = () => {
-    if (user && !isUserInChat && socket && isConnected) {
+    if (user && !isUserInChat) {
+      if (!socket || !isConnected) {
+        alert('Chat server is not connected. Please try again.');
+        return;
+      }
+      
       setIsUserInChat(true);
       
       // Join chat via Socket.IO
@@ -425,19 +430,20 @@ const SafeFloatingChat = () => {
           setShowWelcomePopup(false);
         }, 15000);
       }
-    } else if (!socket || !isConnected) {
-      alert('Chat server is not connected. Please try again.');
     }
   };
   
   const handleLeaveChat = () => {
-    if (user && isUserInChat && socket) {
+    if (user && isUserInChat && socket && isConnected) {
       setIsUserInChat(false);
       
-      // Disconnect from Socket.IO will automatically trigger user-left event
-      socket.disconnect();
+      // Emit leave-chat event instead of disconnecting
+      socket.emit('leave-chat', {
+        userId: user._id || user.id,
+        username: user.username || user.email || 'Anonymous'
+      });
       
-      console.log('👋 Leaving chat via Socket.IO');
+      console.log('👋 Leaving chat via Socket.IO (keeping connection)');
     }
   };
   

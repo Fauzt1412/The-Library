@@ -178,6 +178,39 @@ class SocketService {
         }
       });
 
+      socket.on('leave-chat', async (data) => {
+        try {
+          const { userId, username } = data;
+          
+          if (!userId) {
+            socket.emit('error', { message: 'Invalid user data' });
+            return;
+          }
+
+          const userInfo = this.onlineUsers.get(userId);
+          
+          // Remove user from chat room but keep socket connection
+          socket.leave('chat-room');
+          this.onlineUsers.delete(userId);
+          this.userSockets.delete(socket.id);
+
+          if (userInfo) {
+            socket.to('chat-room').emit('user-left', {
+              userId,
+              username: userInfo.username,
+              timestamp: new Date()
+            });
+          }
+
+          this.broadcastOnlineUsers();
+
+          console.log(`👋 User ${userInfo?.username || username} left chat (connection maintained)`);
+        } catch (error) {
+          console.error('Error in leave-chat:', error);
+          socket.emit('error', { message: 'Failed to leave chat' });
+        }
+      });
+
       socket.on('disconnect', () => {
         const userId = this.userSockets.get(socket.id);
         if (userId) {
