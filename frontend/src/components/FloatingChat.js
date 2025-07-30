@@ -324,13 +324,15 @@ const FloatingChat = () => {
   };
 
   const renderMessage = (msg) => {
-    if (msg.type === 'system') {
-      const isJoinLeave = msg.message.includes('entered the chat') || msg.message.includes('left the chat');
-      const icon = msg.message.includes('entered the chat') ? 'fa-sign-in-alt' : 
-                   msg.message.includes('left the chat') ? 'fa-sign-out-alt' : 'fa-info-circle';
+    if (msg.messageType === 'system' || msg.type === 'system') {
+      const isJoinLeave = msg.message.includes('entered the chat') || msg.message.includes('left the chat') || msg.message.includes('joined the chat');
+      const isWelcome = msg.message.includes('Welcome to Library Forum Chat') || msg.username === 'Library Bot';
+      const icon = msg.message.includes('entered the chat') || msg.message.includes('joined the chat') ? 'fa-sign-in-alt' : 
+                   msg.message.includes('left the chat') ? 'fa-sign-out-alt' : 
+                   isWelcome ? 'fa-heart' : 'fa-info-circle';
       
       return (
-        <div key={msg.id} className="message system-message">
+        <div key={msg._id || msg.id} className={`message system-message ${msg.isNotice ? 'notice-message' : ''}`}>
           <div className="message-content">
             <i className={`fas ${icon} me-2`}></i>
             {msg.message}
@@ -341,19 +343,19 @@ const FloatingChat = () => {
     }
 
     return (
-      <div key={msg.id} className={`message ${msg.isAdmin ? 'admin-message' : ''} ${msg.isNotice ? 'notice-message' : ''}`}>
+      <div key={msg._id || msg.id} className={`message ${msg.isAdmin || msg.messageType === 'admin' ? 'admin-message' : ''} ${msg.isNotice ? 'notice-message' : ''}`}>
         <div className="message-header">
-          <span className={`message-user ${msg.isAdmin ? 'admin-user' : ''}`}>
+          <span className={`message-user ${msg.isAdmin || msg.messageType === 'admin' ? 'admin-user' : ''}`}>
             {msg.isNotice && <i className="fas fa-bullhorn me-1" title="Important Notice"></i>}
-            {msg.isAdmin && !msg.isNotice && <i className="fas fa-crown me-1"></i>}
-            {msg.user}
+            {(msg.isAdmin || msg.messageType === 'admin') && !msg.isNotice && <i className="fas fa-crown me-1"></i>}
+            {msg.user || msg.username}
           </span>
           <div className="message-actions">
             <span className="message-time">{formatTime(msg.timestamp)}</span>
-            {user && user.role === 'admin' && msg.type !== 'system' && (
+            {user && user.role === 'admin' && msg.type !== 'system' && msg.messageType !== 'system' && (
               <button 
                 className="delete-message-btn"
-                onClick={() => handleDeleteMessage(msg.id)}
+                onClick={() => handleDeleteMessage(msg._id || msg.id)}
                 title="Delete message"
               >
                 <i className="fas fa-trash"></i>

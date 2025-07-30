@@ -13,7 +13,15 @@ export const useChat = () => {
 };
 
 export const ChatProvider = ({ children }) => {
-  const { user } = useAuth();
+  // Safely get user with error handling
+  let user = null;
+  try {
+    const authContext = useAuth();
+    user = authContext?.user || null;
+  } catch (error) {
+    console.warn('AuthContext not available in ChatProvider:', error);
+    user = null;
+  }
   const [messages, setMessages] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -61,22 +69,29 @@ export const ChatProvider = ({ children }) => {
   // Initialize chat service and load data
   useEffect(() => {
     const initializeChat = () => {
-      // Load chat settings from localStorage
-      const savedSettings = localStorage.getItem('chat_settings');
-      if (savedSettings) {
-        try {
-          const parsedSettings = JSON.parse(savedSettings);
-          setChatSettings(prev => ({ ...prev, ...parsedSettings }));
-        } catch (error) {
-          console.error('Error parsing chat settings:', error);
+      try {
+        // Load chat settings from localStorage
+        const savedSettings = localStorage.getItem('chat_settings');
+        if (savedSettings) {
+          try {
+            const parsedSettings = JSON.parse(savedSettings);
+            setChatSettings(prev => ({ ...prev, ...parsedSettings }));
+          } catch (error) {
+            console.error('Error parsing chat settings:', error);
+          }
         }
-      }
 
-      // Set up chat service event listeners
-      chatService.on('connected', () => {
-        console.log('Chat service connected');
-        setIsConnected(true);
-      });
+        // Check if chatService is available
+        if (!chatService) {
+          console.error('Chat service not available');
+          return;
+        }
+
+        // Set up chat service event listeners
+        chatService.on('connected', () => {
+          console.log('Chat service connected');
+          setIsConnected(true);
+        });
 
       chatService.on('disconnected', () => {
         console.log('Chat service disconnected');
@@ -85,7 +100,22 @@ export const ChatProvider = ({ children }) => {
 
       chatService.on('recent-messages', (recentMessages) => {
         console.log('Received recent messages:', recentMessages);
-        setMessages(recentMessages || []);
+        const messages = recentMessages || [];
+        
+        // Add welcome message if no messages exist
+        if (messages.length === 0) {
+          const welcomeMessage = {
+            _id: 'welcome-' + Date.now(),
+            username: 'Library Bot',
+            message: '📚 Welcome to Library Forum Chat! This is your space to discuss books, games, share recommendations, and connect with fellow enthusiasts. Please be respectful and follow our community guidelines.',
+            timestamp: new Date(),
+            messageType: 'system',
+            isNotice: true
+          };
+          messages.unshift(welcomeMessage);
+        }
+        
+        setMessages(messages);
       });
 
       chatService.on('new-message', (message) => {
@@ -129,16 +159,26 @@ export const ChatProvider = ({ children }) => {
         setActiveUsers(data.users || []);
       });
 
-      chatService.on('error', (error) => {
-        console.error('Chat service error:', error);
-      });
+        chatService.on('error', (error) => {
+          console.error('Chat service error:', error);
+        });
+      } catch (error) {
+        console.error('Error initializing chat service:', error);
+        setIsConnected(false);
+      }
     };
 
     initializeChat();
 
     // Cleanup function
     return () => {
-      chatService.disconnect();
+      try {
+        if (chatService && typeof chatService.disconnect === 'function') {
+          chatService.disconnect();
+        }
+      } catch (error) {
+        console.error('Error disconnecting chat service:', error);
+      }
     };
   }, []);
 
@@ -153,8 +193,18 @@ export const ChatProvider = ({ children }) => {
 
   const addMessage = async (messageData) => {
     try {
+      if (!chatService || typeof chatService.isUserConnected !== 'function') {
+        console.error('Chat service not available');
+        return null;
+      }
+
       if (!chatService.isUserConnected()) {
         console.error('Not connected to chat service');
+        return null;
+      }
+
+      if (!messageData || !messageData.message) {
+        console.error('Invalid message data');
         return null;
       }
 
@@ -189,6 +239,11 @@ export const ChatProvider = ({ children }) => {
     if (!user || isUserInChat) return;
     
     try {
+      if (!chatService || typeof chatService.connect !== 'function') {
+        console.error('Chat service not available');
+        return;
+      }
+
       // Connect to chat service
       chatService.connect({
         id: user._id || user.id,

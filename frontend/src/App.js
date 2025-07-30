@@ -41,8 +41,8 @@ function App() {
         <AuthProvider>
           <FavoritesProvider>
             <SidebarProvider>
-              <ChatProvider>
               <Router>
+                <ChatProvider>
               <div className="App">
                 <Navbar />
                 <Sidebar />
@@ -74,8 +74,8 @@ function App() {
                   </Routes>
                 </MainLayout>
               </div>
+                </ChatProvider>
               </Router>
-              </ChatProvider>
             </SidebarProvider>
           </FavoritesProvider>
         </AuthProvider>

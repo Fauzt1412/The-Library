@@ -794,6 +794,61 @@
   opacity: 0.7;
 }
 
+/* Welcome notice specific styling */
+.message.system-message.notice-message {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.05));
+  border: 2px solid #28a745;
+  border-left: 6px solid #28a745;
+  box-shadow: 0 4px 20px rgba(40, 167, 69, 0.2);
+  position: relative;
+  overflow: hidden;
+  margin: 16px 0;
+  padding: 16px;
+}
+
+.message.system-message.notice-message::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #28a745, #20c997, #28a745);
+  animation: welcomeShimmer 3s infinite;
+}
+
+@keyframes welcomeShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.message.system-message.notice-message .message-content {
+  font-weight: 600;
+  color: var(--text-primary);
+  position: relative;
+  z-index: 1;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.message.system-message.notice-message .fa-heart {
+  color: #28a745;
+  animation: heartBeat 2s infinite;
+}
+
+@keyframes heartBeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
 .message-header {
   display: flex;
   justify-content: space-between;
