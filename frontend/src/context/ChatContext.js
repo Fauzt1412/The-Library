@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { chatAPI } from '../services/chatAPI';
+import chatService from '../services/chatService';
+import { useAuth } from './AuthContext';
 
 const ChatContext = createContext();
 
@@ -12,10 +13,12 @@ export const useChat = () => {
 };
 
 export const ChatProvider = ({ children }) => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState([]);
-  const [isConnected, setIsConnected] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [activeUsers, setActiveUsers] = useState([]);
+  const [onlineUsersCount, setOnlineUsersCount] = useState(0);
   const [isUserInChat, setIsUserInChat] = useState(false);
   const [chatSettings, setChatSettings] = useState({
     width: 350,
@@ -55,62 +58,88 @@ export const ChatProvider = ({ children }) => {
     });
   };
 
-  // Load initial data and settings from API
+  // Initialize chat service and load data
   useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        const [messagesResponse, usersResponse] = await Promise.all([
-          chatAPI.getMessages(),
-          chatAPI.getOnlineUsers()
-        ]);
-        
-        if (messagesResponse.success) {
-          const loadedMessages = messagesResponse.data || [];
-          
-          // Check if we need to add a welcome message
-          const hasWelcomeMessage = loadedMessages.some(msg => 
-            msg.type === 'system' && msg.message.includes('Welcome to Library Forum Chat')
-          );
-          
-          if (!hasWelcomeMessage) {
-            const welcomeMessage = {
-              id: 'welcome-' + Date.now(),
-              user: 'System',
-              message: '📚 Welcome to Library Forum Chat! This is a place for book lovers to connect and share. Please be respectful and follow our community guidelines. Messages older than 24 hours are automatically cleared to keep discussions fresh.',
-              timestamp: new Date(),
-              isAdmin: false,
-              type: 'system',
-              isPermanent: true // This message will never be auto-cleared
-            };
-            loadedMessages.unshift(welcomeMessage); // Add at the beginning
-          }
-          
-          setMessages(loadedMessages);
-          // Clear old messages on initial load
-          setTimeout(clearOldMessages, 1000);
+    const initializeChat = () => {
+      // Load chat settings from localStorage
+      const savedSettings = localStorage.getItem('chat_settings');
+      if (savedSettings) {
+        try {
+          const parsedSettings = JSON.parse(savedSettings);
+          setChatSettings(prev => ({ ...prev, ...parsedSettings }));
+        } catch (error) {
+          console.error('Error parsing chat settings:', error);
         }
-        
-        if (usersResponse.success) {
-          // Start with empty users list instead of sample data
-          setActiveUsers([]);
-        }
-        
-        // Load chat settings from localStorage
-        const savedSettings = localStorage.getItem('chat_settings');
-        if (savedSettings) {
-          try {
-            const parsedSettings = JSON.parse(savedSettings);
-            setChatSettings(prev => ({ ...prev, ...parsedSettings }));
-          } catch (error) {
-            console.error('Error parsing chat settings:', error);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading chat data:', error);
       }
+
+      // Set up chat service event listeners
+      chatService.on('connected', () => {
+        console.log('Chat service connected');
+        setIsConnected(true);
+      });
+
+      chatService.on('disconnected', () => {
+        console.log('Chat service disconnected');
+        setIsConnected(false);
+      });
+
+      chatService.on('recent-messages', (recentMessages) => {
+        console.log('Received recent messages:', recentMessages);
+        setMessages(recentMessages || []);
+      });
+
+      chatService.on('new-message', (message) => {
+        console.log('New message received:', message);
+        setMessages(prev => [...prev, message]);
+        setUnreadCount(prev => prev + 1);
+      });
+
+      chatService.on('message-deleted', (data) => {
+        console.log('Message deleted:', data);
+        setMessages(prev => prev.filter(msg => msg._id !== data.messageId));
+      });
+
+      chatService.on('user-joined', (data) => {
+        console.log('User joined:', data);
+        const joinMessage = {
+          _id: 'join-' + Date.now(),
+          username: 'System',
+          message: `${data.username} joined the chat`,
+          timestamp: data.timestamp,
+          messageType: 'system'
+        };
+        setMessages(prev => [...prev, joinMessage]);
+      });
+
+      chatService.on('user-left', (data) => {
+        console.log('User left:', data);
+        const leaveMessage = {
+          _id: 'leave-' + Date.now(),
+          username: 'System',
+          message: `${data.username} left the chat`,
+          timestamp: data.timestamp,
+          messageType: 'system'
+        };
+        setMessages(prev => [...prev, leaveMessage]);
+      });
+
+      chatService.on('online-users-updated', (data) => {
+        console.log('Online users updated:', data);
+        setOnlineUsersCount(data.count);
+        setActiveUsers(data.users || []);
+      });
+
+      chatService.on('error', (error) => {
+        console.error('Chat service error:', error);
+      });
     };
-    
-    loadInitialData();
+
+    initializeChat();
+
+    // Cleanup function
+    return () => {
+      chatService.disconnect();
+    };
   }, []);
 
   // Set up interval to check for old messages every hour
@@ -124,14 +153,20 @@ export const ChatProvider = ({ children }) => {
 
   const addMessage = async (messageData) => {
     try {
-      const response = await chatAPI.sendMessage(messageData);
-      if (response.success) {
-        setMessages(prev => [...prev, response.data]);
-        return response.data;
-      } else {
-        console.error('Failed to send message:', response.error);
+      if (!chatService.isUserConnected()) {
+        console.error('Not connected to chat service');
         return null;
       }
+
+      // Send message via Socket.IO
+      chatService.sendMessage(
+        messageData.message,
+        messageData.isAdmin ? 'admin' : 'user',
+        messageData.isNotice || false
+      );
+
+      // The message will be added to the UI when we receive the 'new-message' event
+      return true;
     } catch (error) {
       console.error('Error sending message:', error);
       return null;
@@ -147,69 +182,38 @@ export const ChatProvider = ({ children }) => {
   };
 
   const getOnlineUsersCount = () => {
-    return activeUsers.filter(user => user.status === 'online').length;
+    return onlineUsersCount;
   };
 
   const joinChat = (user) => {
     if (!user || isUserInChat) return;
     
-    // Add user to active users
-    const newUser = {
-      id: Date.now(),
-      username: user.username || user.email || 'Anonymous',
-      status: 'online',
-      lastSeen: new Date()
-    };
-    
-    setActiveUsers(prev => {
-      // Check if user already exists
-      const existingUser = prev.find(u => u.username === newUser.username);
-      if (existingUser) {
-        return prev.map(u => 
-          u.username === newUser.username 
-            ? { ...u, status: 'online', lastSeen: new Date() }
-            : u
-        );
-      }
-      return [...prev, newUser];
-    });
-    
-    // Add join message
-    const joinMessage = {
-      id: Date.now() + 1,
-      user: 'System',
-      message: `${newUser.username} has entered the chat`,
-      timestamp: new Date(),
-      isAdmin: false,
-      type: 'system',
-      isPermanent: false // Join/leave messages can be auto-cleared
-    };
-    
-    setMessages(prev => [...prev, joinMessage]);
-    setIsUserInChat(true);
+    try {
+      // Connect to chat service
+      chatService.connect({
+        id: user._id || user.id,
+        username: user.username || user.email || 'Anonymous'
+      });
+      
+      setIsUserInChat(true);
+      console.log('User joined chat:', user.username);
+    } catch (error) {
+      console.error('Error joining chat:', error);
+    }
   };
 
   const leaveChat = (user) => {
     if (!user || !isUserInChat) return;
     
-    const username = user.username || user.email || 'Anonymous';
-    
-    // Remove user from active users
-    setActiveUsers(prev => prev.filter(u => u.username !== username));
-    
-    // Add leave message
-    const leaveMessage = {
-      id: Date.now(),
-      user: 'System',
-      message: `${username} has left the chat`,
-      timestamp: new Date(),
-      isAdmin: false,
-      type: 'system',
-      isPermanent: false // Join/leave messages can be auto-cleared
-    };
-    
-    setMessages(prev => [...prev, leaveMessage]);
-    setIsUserInChat(false);
+    try {
+      // Disconnect from chat service
+      chatService.disconnect();
+      setIsUserInChat(false);
+      setIsConnected(false);
+      console.log('User left chat:', user.username);
+    } catch (error) {
+      console.error('Error leaving chat:', error);
+    }
   };
 
   const deleteMessage = async (messageId, adminUser) => {
@@ -219,26 +223,16 @@ export const ChatProvider = ({ children }) => {
     }
 
     try {
-      const response = await chatAPI.deleteMessage(messageId);
-      if (response.success) {
-        // Remove message from local state
-        setMessages(prev => prev.filter(msg => msg.id !== messageId));
-        
-        // Add deletion notification
-        const deletionMessage = {
-          id: Date.now(),
-          user: 'System',
-          message: `A message was deleted by ${adminUser.username || 'Admin'}`,
-          timestamp: new Date(),
-          isAdmin: true,
-          type: 'system',
-          isPermanent: false
-        };
-        
-        setMessages(prev => [...prev, deletionMessage]);
-        return true;
+      if (!chatService.isUserConnected()) {
+        console.error('Not connected to chat service');
+        return false;
       }
-      return false;
+
+      // Send delete request via Socket.IO
+      chatService.deleteMessage(messageId);
+      
+      // The message will be removed from UI when we receive the 'message-deleted' event
+      return true;
     } catch (error) {
       console.error('Error deleting message:', error);
       return false;
@@ -247,25 +241,16 @@ export const ChatProvider = ({ children }) => {
 
   const clearMessages = async () => {
     try {
-      const response = await chatAPI.clearMessages();
+      if (!chatService.isUserConnected()) {
+        console.error('Not connected to chat service');
+        return false;
+      }
+
+      // Use HTTP API for admin operations
+      const response = await chatService.clearChat();
       if (response.success) {
-        // Keep permanent system messages (like welcome messages)
-        setMessages(prevMessages => 
-          prevMessages.filter(msg => msg.isPermanent)
-        );
-        
-        // Add a system message about manual clearing
-        const clearNotification = {
-          id: Date.now(),
-          user: 'System',
-          message: 'Chat has been cleared by an administrator.',
-          timestamp: new Date(),
-          isAdmin: true,
-          type: 'system',
-          isPermanent: true
-        };
-        
-        setMessages(prev => [...prev, clearNotification]);
+        // Clear local messages
+        setMessages([]);
         return true;
       }
       return false;
@@ -275,15 +260,7 @@ export const ChatProvider = ({ children }) => {
     }
   };
 
-  const getChatStats = async () => {
-    try {
-      const response = await chatAPI.getChatStats();
-      return response.success ? response.data : null;
-    } catch (error) {
-      console.error('Error fetching chat stats:', error);
-      return null;
-    }
-  };
+
 
   const updateChatSettings = (newSettings) => {
     const updatedSettings = { ...chatSettings, ...newSettings };
@@ -316,7 +293,6 @@ export const ChatProvider = ({ children }) => {
     getOnlineUsersCount,
     clearMessages,
     clearOldMessages,
-    getChatStats,
     joinChat,
     leaveChat,
     isUserInChat,
