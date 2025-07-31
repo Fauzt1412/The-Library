@@ -228,6 +228,10 @@ class ChatController {
     try {
       const socketService = require('../../services/socketService');
       
+      // This endpoint is public - no authentication required
+      // Online users should be visible to everyone
+      console.log('📊 Getting online users - public endpoint');
+      
       // Get all connected users (including those not in chat)
       const allConnectedUsers = socketService.getAllConnectedUsersList();
       const connectedCount = socketService.getAllConnectedUsersCount();
@@ -235,6 +239,8 @@ class ChatController {
       // Get chat room members only
       const chatUsers = socketService.getOnlineUsersList();
       const chatCount = socketService.getOnlineUsersCount();
+      
+      console.log(`📊 Returning ${connectedCount} connected users, ${chatCount} in chat`);
       
       res.json({
         success: true,

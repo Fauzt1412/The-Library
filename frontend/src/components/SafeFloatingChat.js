@@ -54,7 +54,51 @@ const SafeFloatingChat = () => {
   const fetchOnlineUsers = async () => {
     try {
       const serverUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
-      const response = await fetch(`${serverUrl}/API/chat/online`);
+      
+      // Prepare headers with authentication if user is logged in
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (user && user._id) {
+        headers['x-user-id'] = user._id;
+      }
+      
+      const response = await fetch(`${serverUrl}/API/chat/online`, {
+        method: 'GET',
+        headers: headers
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.log('🔒 Authentication required for online users, trying public access');
+          // Try again without authentication headers for public access
+          const publicResponse = await fetch(`${serverUrl}/API/chat/online`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          if (!publicResponse.ok) {
+            throw new Error(`HTTP error! status: ${publicResponse.status}`);
+          }
+          
+          const publicData = await publicResponse.json();
+          if (publicData.success && publicData.connected) {
+            console.log('👥 Fetched online users via HTTP (public):', publicData.connected.count);
+            setActiveUsers(publicData.connected.users.map(user => ({
+              id: user.userId,
+              username: user.username,
+              status: 'online',
+              role: user.role,
+              isInChat: user.isInChat
+            })));
+          }
+          return;
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      }
+      
       const data = await response.json();
       
       if (data.success && data.connected) {
