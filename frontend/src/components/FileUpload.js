@@ -276,10 +276,16 @@ const FileUpload = ({
           <i className="fas fa-info-circle me-2"></i>
           <small>
             Cloudinary not configured. Using local upload. 
-            <a href="#" className="alert-link ms-1" onClick={(e) => {
-              e.preventDefault();
-              alert('Please check your .env.local file and add your Cloudinary credentials!');
-            }}>Setup guide</a>
+            <button 
+              type="button"
+              className="alert-link ms-1 border-0 bg-transparent p-0 text-decoration-underline" 
+              onClick={(e) => {
+                e.preventDefault();
+                alert('Please check your .env.local file and add your Cloudinary credentials!');
+              }}
+            >
+              Setup guide
+            </button>
           </small>
         </div>
       )}

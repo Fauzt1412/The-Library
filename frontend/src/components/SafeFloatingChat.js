@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import '../styles/floating-chat.css';
@@ -51,7 +51,7 @@ const SafeFloatingChat = () => {
   const chatInfoRef = useRef(null);
   
   // Fetch online users via HTTP API (for non-logged-in users or as fallback)
-  const fetchOnlineUsers = async () => {
+  const fetchOnlineUsers = useCallback(async () => {
     try {
       const serverUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
       
@@ -186,7 +186,7 @@ const SafeFloatingChat = () => {
     } catch (error) {
       console.error('❌ Error fetching online users via HTTP:', error);
     }
-  };
+  }, [user]);
 
   // Socket.IO connection
   useEffect(() => {
@@ -437,7 +437,7 @@ const SafeFloatingChat = () => {
       console.error('❌ Failed to initialize socket:', error);
       setConnectionError('Failed to initialize chat connection');
     }
-  }, [shouldDisableChat, isProduction]); // Add required dependencies
+  }, [shouldDisableChat, isProduction, user, isUserInChat, fetchOnlineUsers, isOpen]); // Add required dependencies
   
   // Periodic refresh of online users (for when socket is not available)
   useEffect(() => {
@@ -462,7 +462,7 @@ const SafeFloatingChat = () => {
         console.log('🔄 Cleared periodic online users refresh');
       }
     };
-  }, [isConnected, shouldDisableChat]);
+  }, [isConnected, shouldDisableChat, fetchOnlineUsers]);
   
   // Refresh online users when user logs in/out
   useEffect(() => {
@@ -470,7 +470,7 @@ const SafeFloatingChat = () => {
       // If socket is not available, refresh via HTTP when user changes
       fetchOnlineUsers();
     }
-  }, [user, isConnected, shouldDisableChat]);
+  }, [user, isConnected, shouldDisableChat, fetchOnlineUsers]);
   
   // Handle user authentication changes
   useEffect(() => {
@@ -532,7 +532,7 @@ const SafeFloatingChat = () => {
     } else {
       console.log('👤 No user authenticated in chat');
     }
-  }, [user, isUserInChat, socket, isConnected]);
+  }, [user, isUserInChat, socket, isConnected, fetchOnlineUsers]);
   
   // Auto-scroll to bottom
   useEffect(() => {
@@ -621,14 +621,18 @@ const SafeFloatingChat = () => {
     }
   };
   
-  const handleUserListToggle = () => {
-    setShowUserList(!showUserList);
-    
-    // Refresh online users when opening the list (especially useful when socket is not connected)
-    if (!showUserList && (!isConnected || shouldDisableChat)) {
-      fetchOnlineUsers();
-    }
-  };
+  const handleUserListToggle = useCallback(() => {
+    setShowUserList(prev => {
+      const newShowUserList = !prev;
+      
+      // Refresh online users when opening the list (especially useful when socket is not connected)
+      if (newShowUserList && (!isConnected || shouldDisableChat)) {
+        fetchOnlineUsers();
+      }
+      
+      return newShowUserList;
+    });
+  }, [isConnected, shouldDisableChat, fetchOnlineUsers]);
   
   const handleSettingsToggle = () => {
     setShowSettings(!showSettings);

@@ -70,16 +70,17 @@ const Navbar = () => {
             {isAuthenticated ? (
               <>
                 <li className="nav-item dropdown">
-                  <a 
-                    className="nav-link dropdown-toggle" 
-                    href="#" 
+                  <button 
+                    className="nav-link dropdown-toggle border-0 bg-transparent" 
                     id="navbarDropdown" 
+                    type="button"
                     role="button" 
                     data-bs-toggle="dropdown"
+                    aria-expanded="false"
                   >
                     <i className="fas fa-user me-1"></i>
                     {user?.username}
-                  </a>
+                  </button>
                   <ul className="dropdown-menu">
                     <li>
                       <span className="dropdown-item-text">
