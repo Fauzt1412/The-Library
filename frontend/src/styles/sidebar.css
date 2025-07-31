@@ -390,13 +390,25 @@
 }
 
 /* Responsive Design */
-@media (max-width: 767.98px) {
+/* Mobile Responsive - Hide sidebar on phones, show on tablets and up */
+@media (max-width: 767px) {
   .sidebar {
-    width: 100%;
+    display: none !important;
   }
   
+  .sidebar-overlay {
+    display: none !important;
+  }
+}
+
+/* Tablet and up - Keep current sidebar behavior */
+@media (min-width: 768px) {
+  .sidebar {
+    width: 280px;
+  }
+
   .sidebar.collapsed {
-    width: 70px;
+    width: 80px;
   }
 }
 

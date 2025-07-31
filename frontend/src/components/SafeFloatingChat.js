@@ -903,6 +903,95 @@ const SafeFloatingChat = () => {
   
   return (
     <>
+      {/* Online Users List - Outside Chat Box */}
+      {showUserList && (
+        <div className="online-users-panel">
+          <div className="online-users-header">
+            <h6>Online Users ({getOnlineUsersCount()})</h6>
+            <small className="online-users-subtitle">All connected users</small>
+            <button className="close-online-users" onClick={handleUserListToggle}>
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+          <div className="online-users-content">
+            {activeUsers.length === 0 && !user ? (
+              <div className="online-user-item">
+                <div className="user-status-dot offline"></div>
+                <span className="user-info">
+                  <span className="username">No users online</span>
+                  <span className="user-status-text">Log in to see online users</span>
+                </span>
+              </div>
+            ) : activeUsers.length === 0 && user ? (
+              <div className="online-user-item">
+                <div className="user-status-dot online"></div>
+                <span className="user-info">
+                  <span className="username">{user.username || user.email || 'You'} (You)</span>
+                  <span className="user-status-text">online</span>
+                </span>
+              </div>
+            ) : (
+              <>
+                {/* Show all users from activeUsers list, with current user marked */}
+                {/* Sort users: current user first, then users in chat, then online users */}
+                {activeUsers
+                  .sort((a, b) => {
+                    const aIsCurrentUser = user && (a.id === (user._id || user.id));
+                    const bIsCurrentUser = user && (b.id === (user._id || user.id));
+                    
+                    // Current user always first
+                    if (aIsCurrentUser && !bIsCurrentUser) return -1;
+                    if (!aIsCurrentUser && bIsCurrentUser) return 1;
+                    
+                    // Then sort by chat status (in chat first)
+                    if (a.isInChat && !b.isInChat) return -1;
+                    if (!a.isInChat && b.isInChat) return 1;
+                    
+                    // Then by username alphabetically
+                    return a.username.localeCompare(b.username);
+                  })
+                  .map((activeUser, index) => {
+                  const isCurrentUser = user && (activeUser.id === (user._id || user.id));
+                  
+                  return (
+                    <div key={activeUser.id || index} className={`online-user-item ${activeUser.status || 'online'}`}>
+                      <div className={`user-status-dot ${activeUser.status || 'online'}`}></div>
+                      <span className="user-info">
+                        <span className="username">
+                          {activeUser.username}
+                          {isCurrentUser && ' (You)'}
+                          {activeUser.role === 'admin' && ' - Admin'}
+                          {activeUser.isInChat && ' - in chat'}
+                        </span>
+                        <span className="user-status-text">
+                          {activeUser.isInChat ? 'actively chatting' : 'online'}
+                        </span>
+                      </span>
+                    </div>
+                  );
+                })}
+                
+                {/* Show current user if not in activeUsers list (fallback) */}
+                {user && activeUsers.length > 0 && !activeUsers.find(u => u.id === (user._id || user.id)) && (
+                  <div className="online-user-item online">
+                    <div className="user-status-dot online"></div>
+                    <span className="user-info">
+                      <span className="username">
+                        {user.username || user.email || 'You'} (You)
+                        {isUserInChat && ' - in chat'}
+                      </span>
+                      <span className="user-status-text">
+                        {isUserInChat ? 'actively chatting' : 'online'}
+                      </span>
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Chat Toggle Button */}
         <div className={`floating-chat-toggle ${isOpen ? 'open' : ''}`} 
         onClick={handleToggleChat}
@@ -1180,85 +1269,7 @@ const SafeFloatingChat = () => {
               </div>
             )}
             
-            {showUserList && (
-              <div className="user-list">
-                <div className="user-list-header">
-                  <h6>Online Users ({getOnlineUsersCount()})</h6>
-                  <small className="user-list-subtitle">All connected users • <i className="fas fa-comments"></i> = In Chat</small>
-                  <button className="close-user-list" onClick={handleUserListToggle}>
-                    <i className="fas fa-times"></i>
-                  </button>
-                </div>
-                <div className="user-list-content">
-                  {activeUsers.length === 0 && !user ? (
-                    <div className="user-item">
-                      <div className="user-status offline"></div>
-                      <span className="username">No users online</span>
-                      <span className="user-status-text">Log in to see online users</span>
-                    </div>
-                  ) : activeUsers.length === 0 && user ? (
-                    <div className="user-item">
-                      <div className="user-status online"></div>
-                      <span className="username">{user.username || user.email || 'You'} (You)</span>
-                      <span className="user-status-text">online</span>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Show all users from activeUsers list, with current user marked */}
-                      {/* Sort users: current user first, then users in chat, then online users */}
-                      {activeUsers
-                        .sort((a, b) => {
-                          const aIsCurrentUser = user && (a.id === (user._id || user.id));
-                          const bIsCurrentUser = user && (b.id === (user._id || user.id));
-                          
-                          // Current user always first
-                          if (aIsCurrentUser && !bIsCurrentUser) return -1;
-                          if (!aIsCurrentUser && bIsCurrentUser) return 1;
-                          
-                          // Then sort by chat status (in chat first)
-                          if (a.isInChat && !b.isInChat) return -1;
-                          if (!a.isInChat && b.isInChat) return 1;
-                          
-                          // Then by username alphabetically
-                          return a.username.localeCompare(b.username);
-                        })
-                        .map((activeUser, index) => {
-                        const isCurrentUser = user && (activeUser.id === (user._id || user.id));
-                        
-                        return (
-                          <div key={activeUser.id || index} className={`user-item ${activeUser.status || 'online'}`}>
-                            <div className={`user-status ${activeUser.status || 'online'}`}></div>
-                            <span className="username">
-                              {activeUser.username}
-                              {isCurrentUser && ' (You)'}
-                              {activeUser.role === 'admin' && <i className="fas fa-crown ms-1" title="Administrator"></i>}
-                              {activeUser.isInChat && <i className="fas fa-comments ms-1" title="In Chat"></i>}
-                            </span>
-                            <span className="user-status-text">
-                              {activeUser.isInChat ? 'in chat' : 'online'}
-                            </span>
-                          </div>
-                        );
-                      })}
-                      
-                      {/* Show current user if not in activeUsers list (fallback) */}
-                      {user && activeUsers.length > 0 && !activeUsers.find(u => u.id === (user._id || user.id)) && (
-                        <div className="user-item online">
-                          <div className="user-status online"></div>
-                          <span className="username">
-                            {user.username || user.email || 'You'} (You)
-                            {isUserInChat && <i className="fas fa-comments ms-1" title="In Chat"></i>}
-                          </span>
-                          <span className="user-status-text">
-                            {isUserInChat ? 'in chat' : 'online'}
-                          </span>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
+
             
             <div className="chat-messages">
               {messages.filter(msg => !(msg.isNotice && msg.messageType === 'admin')).length === 0 ? (
