@@ -50,12 +50,36 @@ const SafeFloatingChat = () => {
   const emojiPickerRef = useRef(null);
   const chatInfoRef = useRef(null);
   
+  // Fetch online users via HTTP API (for non-logged-in users or as fallback)
+  const fetchOnlineUsers = async () => {
+    try {
+      const serverUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
+      const response = await fetch(`${serverUrl}/API/chat/online`);
+      const data = await response.json();
+      
+      if (data.success && data.connected) {
+        console.log('👥 Fetched online users via HTTP:', data.connected.count);
+        setActiveUsers(data.connected.users.map(user => ({
+          id: user.userId,
+          username: user.username,
+          status: 'online',
+          role: user.role,
+          isInChat: user.isInChat
+        })));
+      }
+    } catch (error) {
+      console.error('❌ Error fetching online users via HTTP:', error);
+    }
+  };
+
   // Socket.IO connection
   useEffect(() => {
     // Don't attempt connection if chat is disabled
     if (shouldDisableChat) {
-      console.log('🚫 Chat disabled in production - no backend URL configured');
+      console.log('🙫 Chat disabled in production - no backend URL configured');
       setConnectionError('Chat unavailable in production');
+      // Still try to fetch online users via HTTP for non-logged-in users
+      fetchOnlineUsers();
       return;
     }
     
@@ -82,6 +106,21 @@ const SafeFloatingChat = () => {
         console.log('✅ Connected to chat server');
         setIsConnected(true);
         setConnectionError(null);
+        
+        // Register presence if user is logged in (so they can see online users)
+        if (user && user._id) {
+          console.log('📡 Registering user presence for:', user.username || user.email);
+          newSocket.emit('register-presence', {
+            userId: user._id || user.id,
+            username: user.username || user.email || 'Anonymous'
+          });
+        }
+        
+        // Request current online users list
+        newSocket.emit('get-online-users');
+        
+        // Also fetch via HTTP as backup
+        fetchOnlineUsers();
       });
       
       newSocket.on('disconnect', () => {
@@ -166,12 +205,29 @@ const SafeFloatingChat = () => {
       });
       
       newSocket.on('online-users-updated', (data) => {
-        console.log('👥 Online users updated:', data.count);
+        console.log('👥 Online users updated (chat members):', data.count);
+        // This is for chat room members only - we'll use presence-updated for all users
+      });
+      
+      newSocket.on('presence-updated', (data) => {
+        console.log('👥 Presence updated (all connected users):', data.count);
         setActiveUsers(data.users.map(user => ({
           id: user.userId,
           username: user.username,
           status: 'online',
-          role: user.role
+          role: user.role,
+          isInChat: user.isInChat
+        })));
+      });
+      
+      newSocket.on('online-users-list', (data) => {
+        console.log('👥 Online users list received:', data.count);
+        setActiveUsers(data.users.map(user => ({
+          id: user.userId,
+          username: user.username,
+          status: 'online',
+          role: user.role,
+          isInChat: user.isInChat
         })));
       });
       
@@ -210,6 +266,39 @@ const SafeFloatingChat = () => {
     }
   }, [shouldDisableChat, isProduction]); // Add required dependencies
   
+  // Periodic refresh of online users (for when socket is not available)
+  useEffect(() => {
+    let interval;
+    
+    // Only set up periodic refresh if socket is not connected or chat is disabled
+    if (!isConnected || shouldDisableChat) {
+      console.log('🔄 Setting up periodic online users refresh (socket not available)');
+      
+      // Fetch immediately
+      fetchOnlineUsers();
+      
+      // Then fetch every 30 seconds
+      interval = setInterval(() => {
+        fetchOnlineUsers();
+      }, 30000);
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+        console.log('🔄 Cleared periodic online users refresh');
+      }
+    };
+  }, [isConnected, shouldDisableChat]);
+  
+  // Refresh online users when user logs in/out
+  useEffect(() => {
+    if (!isConnected || shouldDisableChat) {
+      // If socket is not available, refresh via HTTP when user changes
+      fetchOnlineUsers();
+    }
+  }, [user, isConnected, shouldDisableChat]);
+  
   // Handle user authentication changes
   useEffect(() => {
     // When user logs out, reset chat state
@@ -226,6 +315,21 @@ const SafeFloatingChat = () => {
           username: 'User'
         });
       }
+    }
+    
+    // Register presence when user logs in and socket is connected
+    if (user && socket && isConnected && user._id) {
+      console.log('📡 Registering presence for newly authenticated user:', user.username || user.email);
+      socket.emit('register-presence', {
+        userId: user._id || user.id,
+        username: user.username || user.email || 'Anonymous'
+      });
+      
+      // Request current online users
+      socket.emit('get-online-users');
+      
+      // Also fetch via HTTP as backup
+      fetchOnlineUsers();
     }
     
     // Log user state changes for debugging
@@ -325,6 +429,11 @@ const SafeFloatingChat = () => {
   
   const handleUserListToggle = () => {
     setShowUserList(!showUserList);
+    
+    // Refresh online users when opening the list (especially useful when socket is not connected)
+    if (!showUserList && (!isConnected || shouldDisableChat)) {
+      fetchOnlineUsers();
+    }
   };
   
   const handleSettingsToggle = () => {
@@ -445,9 +554,10 @@ const SafeFloatingChat = () => {
   };
   
   const getOnlineUsersCount = () => {
-    // Count online users, always include current user if in chat
+    // Count all connected users (including those not in chat)
     const onlineUsers = activeUsers.filter(user => user.status === 'online').length;
-    return Math.max(onlineUsers, isUserInChat ? 1 : 0);
+    // Always show at least 1 if current user is connected (even if not in chat)
+    return Math.max(onlineUsers, (user && isConnected) ? 1 : 0);
   };
   
   // Removed demo users - now only shows real users
@@ -835,7 +945,7 @@ const SafeFloatingChat = () => {
                 <button 
                   className="chat-action-btn" 
                   onClick={handleUserListToggle}
-                  title="View online users"
+                  title="View all online users (including those not in chat)"
                 >
                   <i className="fas fa-users"></i>
                   <span className="user-count">{getOnlineUsersCount()}</span>
@@ -1074,31 +1184,43 @@ const SafeFloatingChat = () => {
               <div className="user-list">
                 <div className="user-list-header">
                   <h6>Online Users ({getOnlineUsersCount()})</h6>
+                  <small className="user-list-subtitle">All connected users • <i className="fas fa-comments"></i> = In Chat</small>
                   <button className="close-user-list" onClick={handleUserListToggle}>
                     <i className="fas fa-times"></i>
                   </button>
                 </div>
                 <div className="user-list-content">
-                  {activeUsers.length === 0 && !isUserInChat ? (
+                  {activeUsers.length === 0 && !user ? (
                     <div className="user-item">
                       <div className="user-status offline"></div>
                       <span className="username">No users online</span>
-                      <span className="user-status-text">Join chat to see others</span>
+                      <span className="user-status-text">Log in to see online users</span>
+                    </div>
+                  ) : activeUsers.length === 0 && user ? (
+                    <div className="user-item">
+                      <div className="user-status online"></div>
+                      <span className="username">{user.username || user.email || 'You'} (You)</span>
+                      <span className="user-status-text">online</span>
                     </div>
                   ) : (
                     <>
-                      {/* Show current user first if in chat */}
-                      {isUserInChat && user && (
+                      {/* Show current user first if connected */}
+                      {user && (
                         <div className="user-item online">
                           <div className="user-status online"></div>
-                          <span className="username">{user.username || user.email || 'You'} (You)</span>
-                          <span className="user-status-text">online</span>
+                          <span className="username">
+                            {user.username || user.email || 'You'} (You)
+                            {isUserInChat && <i className="fas fa-comments ms-1" title="In Chat"></i>}
+                          </span>
+                          <span className="user-status-text">
+                            {isUserInChat ? 'in chat' : 'online'}
+                          </span>
                         </div>
                       )}
                       {/* Show other active users */}
                       {activeUsers.map((activeUser, index) => {
                         // Don't show current user twice
-                        const isCurrentUser = user && (activeUser.id === (user.id || user.email));
+                        const isCurrentUser = user && (activeUser.id === (user._id || user.id));
                         if (isCurrentUser) return null;
                         
                         return (
@@ -1107,8 +1229,11 @@ const SafeFloatingChat = () => {
                             <span className="username">
                               {activeUser.username}
                               {activeUser.role === 'admin' && <i className="fas fa-crown ms-1" title="Administrator"></i>}
+                              {activeUser.isInChat && <i className="fas fa-comments ms-1" title="In Chat"></i>}
                             </span>
-                            <span className="user-status-text">{activeUser.status || 'online'}</span>
+                            <span className="user-status-text">
+                              {activeUser.isInChat ? 'in chat' : 'online'}
+                            </span>
                           </div>
                         );
                       })}

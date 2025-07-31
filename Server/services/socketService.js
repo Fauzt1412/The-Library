@@ -5,8 +5,10 @@ const User = require('../API/models/users');
 class SocketService {
   constructor() {
     this.io = null;
-    this.onlineUsers = new Map();
-    this.userSockets = new Map();
+    this.onlineUsers = new Map(); // Users who joined chat
+    this.userSockets = new Map(); // Socket ID to User ID mapping
+    this.connectedUsers = new Map(); // All connected users (including those who haven't joined chat)
+    this.socketToUser = new Map(); // Socket ID to user info mapping
   }
 
   initialize(server) {
@@ -32,6 +34,50 @@ class SocketService {
     this.io.on('connection', (socket) => {
       console.log(`👤 User connected: ${socket.id}`);
 
+      // Handle user presence registration (for seeing online users without joining chat)
+      socket.on('register-presence', async (data) => {
+        try {
+          const { userId, username } = data;
+          
+          if (!userId || !username) {
+            socket.emit('error', { message: 'Invalid user data for presence' });
+            return;
+          }
+
+          const user = await User.findById(userId).select('username role');
+          if (!user) {
+            socket.emit('error', { message: 'User not found for presence' });
+            return;
+          }
+
+          // Track connected user (not necessarily in chat)
+          this.connectedUsers.set(userId, {
+            socketId: socket.id,
+            username: user.username,
+            role: user.role || 'user',
+            isInChat: false
+          });
+          this.socketToUser.set(socket.id, { userId, username: user.username, role: user.role || 'user' });
+
+          // Broadcast updated presence to ALL connected sockets
+          this.broadcastPresenceUpdate();
+
+          console.log(`✅ User ${user.username} registered presence`);
+        } catch (error) {
+          console.error('Error in register-presence:', error);
+          socket.emit('error', { message: 'Failed to register presence' });
+        }
+      });
+
+      // Handle request for current online users
+      socket.on('get-online-users', () => {
+        const allOnlineUsers = this.getAllOnlineUsers();
+        socket.emit('online-users-list', {
+          count: allOnlineUsers.length,
+          users: allOnlineUsers
+        });
+      });
+
       socket.on('join-chat', async (data) => {
         try {
           const { userId, username } = data;
@@ -45,6 +91,22 @@ class SocketService {
           if (!user) {
             socket.emit('error', { message: 'User not found' });
             return;
+          }
+
+          // Update existing connected user to be in chat
+          if (this.connectedUsers.has(userId)) {
+            const userInfo = this.connectedUsers.get(userId);
+            userInfo.isInChat = true;
+            this.connectedUsers.set(userId, userInfo);
+          } else {
+            // Add to connected users if not already there
+            this.connectedUsers.set(userId, {
+              socketId: socket.id,
+              username: user.username,
+              role: user.role || 'user',
+              isInChat: true
+            });
+            this.socketToUser.set(socket.id, { userId, username: user.username, role: user.role || 'user' });
           }
 
           this.onlineUsers.set(userId, {
@@ -65,7 +127,9 @@ class SocketService {
             timestamp: new Date()
           });
 
+          // Broadcast to both chat room and all connected users
           this.broadcastOnlineUsers();
+          this.broadcastPresenceUpdate();
 
           console.log(`✅ User ${user.username} joined chat`);
         } catch (error) {
@@ -313,10 +377,17 @@ class SocketService {
 
           const userInfo = this.onlineUsers.get(userId);
           
-          // Remove user from chat room but keep socket connection
+          // Remove user from chat room but keep socket connection and presence
           socket.leave('chat-room');
           this.onlineUsers.delete(userId);
           this.userSockets.delete(socket.id);
+
+          // Update connected user status (still connected, just not in chat)
+          if (this.connectedUsers.has(userId)) {
+            const userInfo = this.connectedUsers.get(userId);
+            userInfo.isInChat = false;
+            this.connectedUsers.set(userId, userInfo);
+          }
 
           if (userInfo) {
             socket.to('chat-room').emit('user-left', {
@@ -326,7 +397,9 @@ class SocketService {
             });
           }
 
+          // Broadcast to both chat room and all connected users
           this.broadcastOnlineUsers();
+          this.broadcastPresenceUpdate();
 
           console.log(`👋 User ${userInfo?.username || username} left chat (connection maintained)`);
         } catch (error) {
@@ -337,24 +410,35 @@ class SocketService {
 
       socket.on('disconnect', () => {
         const userId = this.userSockets.get(socket.id);
+        const userInfo = this.socketToUser.get(socket.id);
+        
+        // Clean up all user tracking
         if (userId) {
-          const userInfo = this.onlineUsers.get(userId);
+          const chatUserInfo = this.onlineUsers.get(userId);
           
           this.onlineUsers.delete(userId);
           this.userSockets.delete(socket.id);
 
-          if (userInfo) {
+          if (chatUserInfo) {
             socket.to('chat-room').emit('user-left', {
               userId,
-              username: userInfo.username,
+              username: chatUserInfo.username,
               timestamp: new Date()
             });
           }
-
-          this.broadcastOnlineUsers();
-
-          console.log(`👋 User ${userInfo?.username || 'unknown'} left chat`);
         }
+
+        // Clean up presence tracking
+        if (userInfo) {
+          this.connectedUsers.delete(userInfo.userId);
+          this.socketToUser.delete(socket.id);
+        }
+
+        // Broadcast updates to both chat and presence
+        this.broadcastOnlineUsers();
+        this.broadcastPresenceUpdate();
+
+        console.log(`👋 User ${userInfo?.username || 'unknown'} disconnected completely`);
         console.log(`🔌 User disconnected: ${socket.id}`);
       });
     });
@@ -371,6 +455,25 @@ class SocketService {
       count: onlineUsersArray.length,
       users: onlineUsersArray
     });
+  }
+
+  broadcastPresenceUpdate() {
+    const allOnlineUsers = this.getAllOnlineUsers();
+    
+    // Broadcast to ALL connected sockets, not just chat-room
+    this.io.emit('presence-updated', {
+      count: allOnlineUsers.length,
+      users: allOnlineUsers
+    });
+  }
+
+  getAllOnlineUsers() {
+    return Array.from(this.connectedUsers.entries()).map(([userId, info]) => ({
+      userId,
+      username: info.username,
+      role: info.role,
+      isInChat: info.isInChat
+    }));
   }
 
   async sendSystemMessage(message, adminUserId) {
@@ -408,6 +511,14 @@ class SocketService {
       username: info.username,
       role: info.role
     }));
+  }
+
+  getAllConnectedUsersCount() {
+    return this.connectedUsers.size;
+  }
+
+  getAllConnectedUsersList() {
+    return this.getAllOnlineUsers();
   }
 }
 

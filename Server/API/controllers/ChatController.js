@@ -226,17 +226,46 @@ class ChatController {
 
   static async getOnlineUsers(req, res) {
     try {
+      const socketService = require('../../services/socketService');
+      
+      // Get all connected users (including those not in chat)
+      const allConnectedUsers = socketService.getAllConnectedUsersList();
+      const connectedCount = socketService.getAllConnectedUsersCount();
+      
+      // Get chat room members only
+      const chatUsers = socketService.getOnlineUsersList();
+      const chatCount = socketService.getOnlineUsersCount();
+      
       res.json({
         success: true,
-        onlineCount: 0,
-        users: []
+        connected: {
+          count: connectedCount,
+          users: allConnectedUsers
+        },
+        inChat: {
+          count: chatCount,
+          users: chatUsers
+        },
+        // For backward compatibility
+        onlineCount: connectedCount,
+        users: allConnectedUsers
       });
     } catch (error) {
       console.error('Error getting online users:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to get online users',
-        error: error.message
+        error: error.message,
+        connected: {
+          count: 0,
+          users: []
+        },
+        inChat: {
+          count: 0,
+          users: []
+        },
+        onlineCount: 0,
+        users: []
       });
     }
   }
