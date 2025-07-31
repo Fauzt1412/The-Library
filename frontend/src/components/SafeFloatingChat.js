@@ -59,13 +59,31 @@ const SafeFloatingChat = () => {
       
       if (data.success && data.connected) {
         console.log('👥 Fetched online users via HTTP:', data.connected.count);
-        setActiveUsers(data.connected.users.map(user => ({
-          id: user.userId,
-          username: user.username,
-          status: 'online',
-          role: user.role,
-          isInChat: user.isInChat
-        })));
+        setActiveUsers(prev => {
+          const serverUsers = data.connected.users.map(user => ({
+            id: user.userId,
+            username: user.username,
+            status: 'online',
+            role: user.role,
+            isInChat: user.isInChat
+          }));
+          
+          // Preserve current user's local status if they exist in the list
+          const currentUserId = user?._id || user?.id;
+          if (currentUserId) {
+            const currentUserInPrev = prev.find(u => u.id === currentUserId);
+            if (currentUserInPrev) {
+              // Preserve the current user's local isInChat status
+              return serverUsers.map(u => 
+                u.id === currentUserId 
+                  ? { ...u, isInChat: currentUserInPrev.isInChat }
+                  : u
+              );
+            }
+          }
+          
+          return serverUsers;
+        });
       }
     } catch (error) {
       console.error('❌ Error fetching online users via HTTP:', error);
@@ -232,24 +250,60 @@ const SafeFloatingChat = () => {
       
       newSocket.on('presence-updated', (data) => {
         console.log('👥 Presence updated (all connected users):', data.count);
-        setActiveUsers(data.users.map(user => ({
-          id: user.userId,
-          username: user.username,
-          status: 'online',
-          role: user.role,
-          isInChat: user.isInChat
-        })));
+        setActiveUsers(prev => {
+          const serverUsers = data.users.map(user => ({
+            id: user.userId,
+            username: user.username,
+            status: 'online',
+            role: user.role,
+            isInChat: user.isInChat
+          }));
+          
+          // Preserve current user's local status if they exist in the list
+          const currentUserId = user?._id || user?.id;
+          if (currentUserId) {
+            const currentUserInPrev = prev.find(u => u.id === currentUserId);
+            if (currentUserInPrev) {
+              // Preserve the current user's local isInChat status
+              return serverUsers.map(u => 
+                u.id === currentUserId 
+                  ? { ...u, isInChat: currentUserInPrev.isInChat }
+                  : u
+              );
+            }
+          }
+          
+          return serverUsers;
+        });
       });
       
       newSocket.on('online-users-list', (data) => {
         console.log('👥 Online users list received:', data.count);
-        setActiveUsers(data.users.map(user => ({
-          id: user.userId,
-          username: user.username,
-          status: 'online',
-          role: user.role,
-          isInChat: user.isInChat
-        })));
+        setActiveUsers(prev => {
+          const serverUsers = data.users.map(user => ({
+            id: user.userId,
+            username: user.username,
+            status: 'online',
+            role: user.role,
+            isInChat: user.isInChat
+          }));
+          
+          // Preserve current user's local status if they exist in the list
+          const currentUserId = user?._id || user?.id;
+          if (currentUserId) {
+            const currentUserInPrev = prev.find(u => u.id === currentUserId);
+            if (currentUserInPrev) {
+              // Preserve the current user's local isInChat status
+              return serverUsers.map(u => 
+                u.id === currentUserId 
+                  ? { ...u, isInChat: currentUserInPrev.isInChat }
+                  : u
+              );
+            }
+          }
+          
+          return serverUsers;
+        });
       });
       
       newSocket.on('message-deleted', (data) => {
