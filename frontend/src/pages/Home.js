@@ -106,7 +106,7 @@ const Home = () => {
             Your comprehensive wiki and information space for books and games
           </p>
           <div className="d-flex justify-content-center gap-3">
-            <Link to="/books" className="btn btn-light btn-lg">
+            <Link to="/books" className="btn btn-outline-light btn-lg">
               <i className="fas fa-book me-2"></i>
               Browse Books
             </Link>

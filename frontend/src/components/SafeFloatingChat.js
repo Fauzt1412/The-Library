@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
+import { useAuth } from '../context/AuthContext';
 import '../styles/floating-chat.css';
 
 // Enhanced safe floating chat component with all original features
@@ -11,13 +12,15 @@ const SafeFloatingChat = () => {
   const hasBackendUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL;
   const shouldDisableChat = isProduction && !hasBackendUrl;
   
+  // Get user from AuthContext instead of local state
+  const { user, isAuthenticated } = useAuth();
+  
   // All React hooks must be called before any conditional returns
   const [isOpen, setIsOpen] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([]);
   const [isUserInChat, setIsUserInChat] = useState(false);
-  const [user, setUser] = useState(null);
   const [hasError, setHasError] = useState(false);
   const [showUserList, setShowUserList] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -40,6 +43,7 @@ const SafeFloatingChat = () => {
   const [connectionError, setConnectionError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [pinnedNotices, setPinnedNotices] = useState([]);
   
   const messagesEndRef = useRef(null);
   const chatInputRef = useRef(null);
@@ -102,7 +106,13 @@ const SafeFloatingChat = () => {
       // Real-time message events
       newSocket.on('new-message', (message) => {
         console.log('📨 New message received:', message);
-        setMessages(prev => [...prev, message]);
+        
+        // Handle notice messages separately
+        if (message.isNotice && message.messageType === 'admin') {
+          handleNewNotice(message);
+        } else {
+          setMessages(prev => [...prev, message]);
+        }
         
         // Update unread count if chat is closed
         if (!isOpen) {
@@ -112,7 +122,23 @@ const SafeFloatingChat = () => {
       
       newSocket.on('recent-messages', (messages) => {
         console.log('📋 Recent messages loaded:', messages.length);
-        setMessages(messages);
+        
+        // Separate notice messages from regular messages
+        const regularMessages = messages.filter(msg => !(msg.isNotice && msg.messageType === 'admin'));
+        const noticeMessages = messages.filter(msg => msg.isNotice && msg.messageType === 'admin');
+        
+        setMessages(regularMessages);
+        
+        // Add notice messages to pinned notices (but don't auto-dismiss old ones)
+        if (noticeMessages.length > 0) {
+          const notices = noticeMessages.map(msg => ({
+            ...msg,
+            id: msg._id || Date.now().toString() + Math.random(),
+            timestamp: new Date(msg.timestamp),
+            autoHide: false // Don't auto-hide old notices
+          }));
+          setPinnedNotices(prev => [...prev, ...notices]);
+        }
       });
       
       newSocket.on('user-joined', (data) => {
@@ -157,6 +183,14 @@ const SafeFloatingChat = () => {
       newSocket.on('chat-cleared', () => {
         console.log('🧹 Chat cleared by admin');
         setMessages([]);
+        setPinnedNotices([]);
+      });
+      
+      newSocket.on('cache-cleared', (data) => {
+        console.log('🗑️ Cache cleared successfully:', data);
+        setMessages([]);
+        setPinnedNotices([]);
+        alert(`Cache cleared successfully! ${data.deletedCount} messages deleted from database.`);
       });
       
       newSocket.on('error', (error) => {
@@ -174,21 +208,33 @@ const SafeFloatingChat = () => {
       console.error('❌ Failed to initialize socket:', error);
       setConnectionError('Failed to initialize chat connection');
     }
-  }, []); // Remove isOpen dependency to prevent reconnections
+  }, [shouldDisableChat, isProduction]); // Add required dependencies
   
-  // Try to get user from localStorage or context safely
+  // Handle user authentication changes
   useEffect(() => {
-    try {
-      // Try to get user from localStorage first
-      const savedUser = localStorage.getItem('user');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
+    // When user logs out, reset chat state
+    if (!user && isUserInChat) {
+      console.log('👋 User logged out, leaving chat');
+      setIsUserInChat(false);
+      setMessages([]);
+      setUnreadCount(0);
+      
+      // Emit leave-chat event if socket is connected
+      if (socket && isConnected) {
+        socket.emit('leave-chat', {
+          userId: 'logged-out',
+          username: 'User'
+        });
       }
-    } catch (error) {
-      console.warn('Error initializing chat:', error);
-      setHasError(true);
     }
-  }, []);
+    
+    // Log user state changes for debugging
+    if (user) {
+      console.log('👤 User authenticated in chat:', user.username || user.email);
+    } else {
+      console.log('👤 No user authenticated in chat');
+    }
+  }, [user, isUserInChat, socket, isConnected]);
   
   // Auto-scroll to bottom
   useEffect(() => {
@@ -235,6 +281,38 @@ const SafeFloatingChat = () => {
       };
     }
   }, [showChatInfo]);
+  
+  // Handle new notice messages
+  const handleNewNotice = (noticeMessage) => {
+    const noticeId = noticeMessage._id || Date.now().toString();
+    const notice = {
+      ...noticeMessage,
+      id: noticeId,
+      timestamp: new Date(noticeMessage.timestamp),
+      autoHide: true
+    };
+    
+    console.log('📢 New notice received:', notice.message);
+    
+    // Add to pinned notices
+    setPinnedNotices(prev => {
+      // Remove any existing notice with same ID
+      const filtered = prev.filter(n => n.id !== noticeId);
+      return [...filtered, notice];
+    });
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+      setPinnedNotices(prev => prev.filter(n => n.id !== noticeId));
+      console.log('📢 Notice auto-dismissed:', noticeId);
+    }, 10000);
+  };
+  
+  // Manually dismiss a notice
+  const dismissNotice = (noticeId) => {
+    setPinnedNotices(prev => prev.filter(n => n.id !== noticeId));
+    console.log('📢 Notice manually dismissed:', noticeId);
+  };
   
   // Removed demo users initialization - now only tracks real users
   
@@ -297,9 +375,48 @@ const SafeFloatingChat = () => {
       return;
     }
 
+    if (!socket || !isConnected) {
+      alert('Chat server is not connected.');
+      return;
+    }
+
     if (window.confirm('Are you sure you want to clear ALL chat messages? This action cannot be undone.')) {
+      // Send clear-all-messages event via Socket.IO
+      socket.emit('clear-all-messages');
+      console.log('🧹 Clearing all messages via Socket.IO');
+    }
+  };
+
+  const handleClearCache = async () => {
+    console.log('🔍 Clear Cache button clicked');
+    console.log('User:', user);
+    console.log('User role:', user?.role);
+    console.log('Socket connected:', isConnected);
+    
+    if (!user || user.role !== 'admin') {
+      alert('Only administrators can clear cache.');
+      return;
+    }
+
+    if (!socket || !isConnected) {
+      alert('Chat server is not connected.');
+      return;
+    }
+
+    if (window.confirm('Are you sure you want to PERMANENTLY DELETE all messages, chat history, and notices from the database? This will completely wipe everything and cannot be undone!')) {
+      console.log('🗑️ Sending clear-cache event via Socket.IO');
+      
+      // Send clear-cache event via Socket.IO
+      socket.emit('clear-cache', { action: 'force_delete_all' });
+      
+      // Also clear frontend state immediately
       setMessages([]);
-      alert('All messages have been cleared.');
+      setPinnedNotices([]);
+      
+      console.log('🗑️ Frontend state cleared, waiting for server response');
+      
+      // Show user feedback
+      alert('Cache clear request sent. All data should be deleted from database.');
     }
   };
   
@@ -387,6 +504,9 @@ const SafeFloatingChat = () => {
         case 'n': // North edge
           newHeight = Math.max(350, Math.min(900, startHeight - deltaY));
           break;
+        default:
+          // No action for unknown handle types
+          break;
       }
       
       updateChatSettings({ width: newWidth, height: newHeight });
@@ -404,6 +524,8 @@ const SafeFloatingChat = () => {
   };
   
   const handleJoinChat = () => {
+    console.log('🚀 handleJoinChat called - User:', user ? (user.username || user.email) : 'null', 'isUserInChat:', isUserInChat);
+    
     if (user && !isUserInChat) {
       if (!socket || !isConnected) {
         alert('Chat server is not connected. Please try again.');
@@ -761,6 +883,42 @@ const SafeFloatingChat = () => {
           <div className="resize-handle resize-handle-sw" onMouseDown={(e) => handleMouseDown(e, 'sw')}></div>
 
           <div className="chat-content">
+            {/* Pinned Notices */}
+            {pinnedNotices.length > 0 && (
+              <div className="pinned-notices-container">
+                {pinnedNotices.map((notice) => (
+                  <div key={notice.id} className="pinned-notice">
+                    <div className="pinned-notice-content">
+                      <div className="pinned-notice-header">
+                        <div className="pinned-notice-title">
+                          <i className="fas fa-bullhorn me-2"></i>
+                          <span className="notice-badge">ADMIN NOTICE</span>
+                          <span className="notice-author">{notice.username}</span>
+                        </div>
+                        <button 
+                          className="dismiss-notice-btn"
+                          onClick={() => dismissNotice(notice.id)}
+                          title="Dismiss notice"
+                        >
+                          <i className="fas fa-times"></i>
+                        </button>
+                      </div>
+                      <div className="pinned-notice-message">
+                        {notice.message}
+                      </div>
+                      <div className="pinned-notice-footer">
+                        <span className="notice-time">{formatTime(notice.timestamp)}</span>
+                        <span className="auto-dismiss-info">
+                          <i className="fas fa-clock me-1"></i>
+                          Auto-dismiss in 10s
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
             {showSettings && (
               <div className="chat-settings-panel">
                 <div className="chat-settings-header">
@@ -786,8 +944,49 @@ const SafeFloatingChat = () => {
                         <button 
                           className="btn btn-danger btn-sm"
                           onClick={handleClearAllMessages}
+                          disabled={!isConnected}
+                          title={!isConnected ? 'Chat server not connected' : 'Clear all messages'}
                         >
-                          Clear
+                          {!isConnected ? (
+                            <>
+                              <i className="fas fa-exclamation-triangle me-1"></i>
+                              Offline
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-trash me-1"></i>
+                              Clear All
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <div className="admin-action">
+                        <div className="admin-action-info">
+                          <div className="admin-action-title">
+                            <i className="fas fa-database me-2"></i>
+                            Clear Cache
+                          </div>
+                          <div className="admin-action-desc">
+                            Permanently delete ALL data from database
+                          </div>
+                        </div>
+                        <button 
+                          className="btn btn-warning btn-sm"
+                          onClick={handleClearCache}
+                          disabled={!isConnected}
+                          title={!isConnected ? 'Chat server not connected' : 'Permanently delete all data from database'}
+                        >
+                          {!isConnected ? (
+                            <>
+                              <i className="fas fa-exclamation-triangle me-1"></i>
+                              Offline
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-database me-1"></i>
+                              Clear Cache
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -920,13 +1119,15 @@ const SafeFloatingChat = () => {
             )}
             
             <div className="chat-messages">
-              {messages.length === 0 ? (
+              {messages.filter(msg => !(msg.isNotice && msg.messageType === 'admin')).length === 0 ? (
                 <div className="no-messages">
                   <i className="fas fa-comments fa-2x mb-2"></i>
                   <p>No messages yet. Start the conversation!</p>
                 </div>
               ) : (
-                messages.map(renderMessage)
+                messages
+                  .filter(msg => !(msg.isNotice && msg.messageType === 'admin'))
+                  .map(renderMessage)
               )}
               <div ref={messagesEndRef} />
             </div>

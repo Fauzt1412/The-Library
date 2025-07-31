@@ -169,7 +169,9 @@ const ChatSettings = ({ onClose, user, onClearMessages }) => {
                 <button 
                   className="btn btn-danger btn-sm"
                   onClick={onClearMessages}
+                  title="Clear all chat messages permanently"
                 >
+                  <i className="fas fa-trash me-1"></i>
                   Clear All
                 </button>
               </div>

@@ -178,6 +178,130 @@ class SocketService {
         }
       });
 
+      socket.on('clear-all-messages', async (data) => {
+        try {
+          const userId = this.userSockets.get(socket.id);
+          if (!userId) {
+            socket.emit('error', { message: 'User not authenticated' });
+            return;
+          }
+
+          const user = await User.findById(userId).select('role username');
+          if (!user) {
+            socket.emit('error', { message: 'User not found' });
+            return;
+          }
+
+          if (user.role !== 'admin') {
+            socket.emit('error', { message: 'Only administrators can clear all messages' });
+            return;
+          }
+
+          // Hard delete all messages - permanently remove from database
+          const result = await ChatMessage.deleteMany({});
+
+          // Notify all connected clients
+          this.io.to('chat-room').emit('chat-cleared');
+
+          console.log(`🗑️ Admin ${user.username} permanently deleted all chat messages via Socket.IO (${result.deletedCount} messages)`);
+        } catch (error) {
+          console.error('Error in clear-all-messages:', error);
+          socket.emit('error', { message: 'Failed to clear all messages' });
+        }
+      });
+
+      socket.on('clear-cache', async (data) => {
+        console.log('🔍 Clear cache event received from client');
+        console.log('Data:', data);
+        
+        try {
+          const userId = this.userSockets.get(socket.id);
+          console.log('User ID from socket:', userId);
+          
+          if (!userId) {
+            console.log('❌ User not authenticated');
+            socket.emit('error', { message: 'User not authenticated' });
+            return;
+          }
+
+          const user = await User.findById(userId).select('role username');
+          console.log('User found:', user?.username, 'Role:', user?.role);
+          
+          if (!user) {
+            console.log('❌ User not found in database');
+            socket.emit('error', { message: 'User not found' });
+            return;
+          }
+
+          if (user.role !== 'admin') {
+            console.log('❌ User is not admin');
+            socket.emit('error', { message: 'Only administrators can clear cache' });
+            return;
+          }
+
+          console.log('🗑️ Starting cache clear process...');
+          
+          // MULTIPLE DELETION STRATEGIES - Use the most aggressive approach
+          let deletedCount = 0;
+          
+          try {
+            // Strategy 1: Use SAME method as books/games - findByIdAndDelete
+            console.log('Strategy 1: Using findByIdAndDelete (same as books/games)...');
+            const allMessages = await ChatMessage.find({}, '_id');
+            const messageIds = allMessages.map(msg => msg._id);
+            deletedCount = messageIds.length;
+            
+            console.log(`Found ${deletedCount} messages to delete`);
+            
+            // Delete each message using findByIdAndDelete (same as books/games)
+            for (const messageId of messageIds) {
+              await ChatMessage.findByIdAndDelete(messageId);
+            }
+            console.log(`✅ Successfully deleted ${deletedCount} messages using findByIdAndDelete`);
+            
+            // Strategy 2: Try to drop collection for complete cleanup
+            console.log('Strategy 2: Attempting to drop collection...');
+            await ChatMessage.collection.drop();
+            console.log('✅ Collection dropped successfully');
+            
+          } catch (dropError) {
+            console.log('⚠️ Collection drop failed, but documents were deleted:', dropError.message);
+            // This is fine, deleteMany already worked
+          }
+          
+          // Strategy 3: Ensure collection exists and is empty
+          try {
+            const remainingCount = await ChatMessage.countDocuments({});
+            console.log(`Remaining documents after cleanup: ${remainingCount}`);
+            
+            if (remainingCount > 0) {
+              console.log('Force deleting remaining documents with RAW MongoDB...');
+              await ChatMessage.collection.deleteMany({});
+            }
+          } catch (countError) {
+            console.log('Count check failed, but cleanup likely successful:', countError.message);
+          }
+
+          // Notify all connected clients
+          this.io.to('chat-room').emit('chat-cleared');
+          
+          // Send success response to the requesting client
+          socket.emit('cache-cleared', { 
+            success: true, 
+            deletedCount: deletedCount,
+            message: 'Cache cleared successfully'
+          });
+
+          console.log(`🗑️💾 CACHE CLEARED: Admin ${user.username} permanently wiped ALL chat data`);
+          console.log(`✅ Total documents deleted: ${deletedCount}`);
+          console.log('⚠️ Database completely cleared - all messages permanently deleted');
+          
+        } catch (error) {
+          console.error('❌ Error in clear-cache:', error);
+          socket.emit('error', { message: 'Failed to clear cache: ' + error.message });
+        }
+      });
+
       socket.on('leave-chat', async (data) => {
         try {
           const { userId, username } = data;

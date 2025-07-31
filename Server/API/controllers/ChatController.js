@@ -147,6 +147,83 @@ class ChatController {
     }
   }
 
+  static async clearAllMessages(req, res) {
+    try {
+      const userId = req.headers['x-user-id'];
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User authentication required'
+        });
+      }
+
+      const user = await User.findById(userId).select('role username');
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      if (user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Only administrators can clear all messages'
+        });
+      }
+
+      // Hard delete all messages - permanently remove from database
+      const result = await ChatMessage.deleteMany({});
+
+      // Notify all connected clients via Socket.IO
+      const socketService = require('../../services/socketService');
+      socketService.clearChatForAll();
+
+      console.log(`🗑️ Admin ${user.username} permanently deleted all chat messages (${result.deletedCount} messages)`);
+
+      res.json({
+        success: true,
+        message: 'All messages permanently deleted from database',
+        deletedCount: result.deletedCount
+      });
+
+    } catch (error) {
+      console.error('Error clearing all messages:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to clear all messages',
+        error: error.message
+      });
+    }
+  }
+
+  static async clearCache(req, res) {
+    const userId = req.headers['x-user-id'];
+    
+    try {
+      // Simple admin check
+      const user = await User.findById(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
+      // SUPER SIMPLE: Just delete everything like books do
+      const result = await ChatMessage.deleteMany({});
+      
+      console.log(`🗑️ SIMPLE DELETE: Removed ${result.deletedCount} messages`);
+      
+      res.status(200).json({ 
+        message: 'All messages deleted successfully',
+        deletedCount: result.deletedCount 
+      });
+      
+    } catch (error) {
+      console.error('Delete error:', error);
+      res.status(500).json({ error: 'Failed to delete messages' });
+    }
+  }
+
   static async getOnlineUsers(req, res) {
     try {
       res.json({

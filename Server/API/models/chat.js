@@ -74,4 +74,41 @@ chatMessageSchema.statics.getMessagesPaginated = function(page = 1, limit = 50) 
     .exec();
 };
 
+// Hard delete method for clear cache - completely removes from database
+chatMessageSchema.statics.hardDeleteAll = async function() {
+  try {
+    // Method 1: Try to drop the collection completely
+    const collectionName = this.collection.name;
+    console.log(`Attempting to drop collection: ${collectionName}`);
+    
+    await this.collection.drop();
+    console.log('✅ Collection dropped successfully');
+    return { success: true, method: 'drop', deletedCount: 'all' };
+    
+  } catch (dropError) {
+    console.log('Collection drop failed, trying deleteMany:', dropError.message);
+    
+    try {
+      // Method 2: Use raw MongoDB deleteMany
+      const result = await this.collection.deleteMany({});
+      console.log(`✅ Raw deleteMany succeeded: ${result.deletedCount} deleted`);
+      return { success: true, method: 'deleteMany', deletedCount: result.deletedCount };
+      
+    } catch (deleteError) {
+      console.log('Raw deleteMany failed, trying Mongoose deleteMany:', deleteError.message);
+      
+      try {
+        // Method 3: Use Mongoose deleteMany
+        const result = await this.deleteMany({});
+        console.log(`✅ Mongoose deleteMany succeeded: ${result.deletedCount} deleted`);
+        return { success: true, method: 'mongoose', deletedCount: result.deletedCount };
+        
+      } catch (mongooseError) {
+        console.log('All deletion methods failed:', mongooseError.message);
+        return { success: false, error: mongooseError.message };
+      }
+    }
+  }
+};
+
 module.exports = mongoose.model('ChatMessage', chatMessageSchema);
