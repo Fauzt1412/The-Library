@@ -68,9 +68,77 @@ app.get('/API/health', (req, res) => {
             login: '/API/login',
             signup: '/API/signup',
             favorites: '/API/favorites',
-            user: '/API/user'
+            user: '/API/user',
+            chat: '/API/chat'
         }
     });
+});
+
+// DIRECT BYPASS: Online users endpoint (completely public, no middleware)
+app.get('/API/chat/online-direct', (req, res) => {
+    try {
+        console.log('🔥 [DIRECT BYPASS] Online users endpoint hit');
+        console.log('🔥 [DIRECT BYPASS] Method:', req.method);
+        console.log('🔥 [DIRECT BYPASS] Headers:', req.headers);
+        
+        // Try to get socket service
+        const socketService = require('./services/socketService');
+        
+        if (!socketService) {
+            console.log('🔥 [DIRECT BYPASS] Socket service not available');
+            return res.json({
+                success: true,
+                message: 'Direct bypass endpoint working, but socket service not available',
+                connected: { count: 0, users: [] },
+                inChat: { count: 0, users: [] },
+                onlineCount: 0,
+                users: [],
+                timestamp: new Date().toISOString(),
+                endpoint: 'DIRECT BYPASS'
+            });
+        }
+        
+        // Get online users from socket service
+        const allConnectedUsers = socketService.getAllConnectedUsersList();
+        const connectedCount = socketService.getAllConnectedUsersCount();
+        const chatUsers = socketService.getOnlineUsersList();
+        const chatCount = socketService.getOnlineUsersCount();
+        
+        console.log(`🔥 [DIRECT BYPASS] Returning ${connectedCount} connected, ${chatCount} in chat`);
+        
+        const response = {
+            success: true,
+            connected: {
+                count: connectedCount,
+                users: allConnectedUsers
+            },
+            inChat: {
+                count: chatCount,
+                users: chatUsers
+            },
+            onlineCount: connectedCount,
+            users: allConnectedUsers,
+            timestamp: new Date().toISOString(),
+            endpoint: 'DIRECT BYPASS - NO MIDDLEWARE'
+        };
+        
+        console.log('🔥 [DIRECT BYPASS] Sending response:', JSON.stringify(response, null, 2));
+        res.status(200).json(response);
+        
+    } catch (error) {
+        console.error('🔥 [DIRECT BYPASS] Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Direct bypass endpoint error',
+            error: error.message,
+            connected: { count: 0, users: [] },
+            inChat: { count: 0, users: [] },
+            onlineCount: 0,
+            users: [],
+            timestamp: new Date().toISOString(),
+            endpoint: 'DIRECT BYPASS - ERROR'
+        });
+    }
 });
 
 // Serve static files from uploads directory

@@ -109,7 +109,31 @@ const SafeFloatingChat = () => {
           });
           
           if (!publicResponse.ok) {
-            throw new Error(`HTTP error! status: ${publicResponse.status}`);
+            console.log('🔥 Public access also failed, trying direct bypass endpoint');
+            // Try the direct bypass endpoint
+            const bypassResponse = await fetch(`${serverUrl}/API/chat/online-direct`, {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (!bypassResponse.ok) {
+              throw new Error(`All endpoints failed! Direct bypass status: ${bypassResponse.status}`);
+            }
+            
+            const bypassData = await bypassResponse.json();
+            console.log('🔥 Direct bypass successful:', bypassData);
+            
+            if (bypassData.success && bypassData.connected) {
+              console.log('👥 Fetched online users via DIRECT BYPASS:', bypassData.connected.count);
+              setActiveUsers(bypassData.connected.users.map(user => ({
+                id: user.userId,
+                username: user.username,
+                status: 'online',
+                role: user.role,
+                isInChat: user.isInChat
+              })));
+            }
+            return;
           }
           
           const publicData = await publicResponse.json();
