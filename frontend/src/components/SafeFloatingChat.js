@@ -1204,8 +1204,45 @@ const SafeFloatingChat = () => {
                     </div>
                   ) : (
                     <>
-                      {/* Show current user first if connected */}
-                      {user && (
+                      {/* Show all users from activeUsers list, with current user marked */}
+                      {/* Sort users: current user first, then users in chat, then online users */}
+                      {activeUsers
+                        .sort((a, b) => {
+                          const aIsCurrentUser = user && (a.id === (user._id || user.id));
+                          const bIsCurrentUser = user && (b.id === (user._id || user.id));
+                          
+                          // Current user always first
+                          if (aIsCurrentUser && !bIsCurrentUser) return -1;
+                          if (!aIsCurrentUser && bIsCurrentUser) return 1;
+                          
+                          // Then sort by chat status (in chat first)
+                          if (a.isInChat && !b.isInChat) return -1;
+                          if (!a.isInChat && b.isInChat) return 1;
+                          
+                          // Then by username alphabetically
+                          return a.username.localeCompare(b.username);
+                        })
+                        .map((activeUser, index) => {
+                        const isCurrentUser = user && (activeUser.id === (user._id || user.id));
+                        
+                        return (
+                          <div key={activeUser.id || index} className={`user-item ${activeUser.status || 'online'}`}>
+                            <div className={`user-status ${activeUser.status || 'online'}`}></div>
+                            <span className="username">
+                              {activeUser.username}
+                              {isCurrentUser && ' (You)'}
+                              {activeUser.role === 'admin' && <i className="fas fa-crown ms-1" title="Administrator"></i>}
+                              {activeUser.isInChat && <i className="fas fa-comments ms-1" title="In Chat"></i>}
+                            </span>
+                            <span className="user-status-text">
+                              {activeUser.isInChat ? 'in chat' : 'online'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      
+                      {/* Show current user if not in activeUsers list (fallback) */}
+                      {user && activeUsers.length > 0 && !activeUsers.find(u => u.id === (user._id || user.id)) && (
                         <div className="user-item online">
                           <div className="user-status online"></div>
                           <span className="username">
@@ -1217,26 +1254,6 @@ const SafeFloatingChat = () => {
                           </span>
                         </div>
                       )}
-                      {/* Show other active users */}
-                      {activeUsers.map((activeUser, index) => {
-                        // Don't show current user twice
-                        const isCurrentUser = user && (activeUser.id === (user._id || user.id));
-                        if (isCurrentUser) return null;
-                        
-                        return (
-                          <div key={activeUser.id || index} className={`user-item ${activeUser.status || 'online'}`}>
-                            <div className={`user-status ${activeUser.status || 'online'}`}></div>
-                            <span className="username">
-                              {activeUser.username}
-                              {activeUser.role === 'admin' && <i className="fas fa-crown ms-1" title="Administrator"></i>}
-                              {activeUser.isInChat && <i className="fas fa-comments ms-1" title="In Chat"></i>}
-                            </span>
-                            <span className="user-status-text">
-                              {activeUser.isInChat ? 'in chat' : 'online'}
-                            </span>
-                          </div>
-                        );
-                      })}
                     </>
                   )}
                 </div>
