@@ -114,6 +114,27 @@ const SafeFloatingChat = () => {
             userId: user._id || user.id,
             username: user.username || user.email || 'Anonymous'
           });
+          
+          // Ensure current user is in activeUsers list with correct status
+          setActiveUsers(prev => {
+            const currentUserId = user._id || user.id;
+            const userExists = prev.some(u => u.id === currentUserId);
+            
+            if (!userExists) {
+              return [...prev, {
+                id: currentUserId,
+                username: user.username || user.email || 'Anonymous',
+                status: 'online',
+                role: user.role || 'user',
+                isInChat: isUserInChat
+              }];
+            }
+            
+            // Update existing user with current chat status
+            return prev.map(u => 
+              u.id === currentUserId ? { ...u, isInChat: isUserInChat } : u
+            );
+          });
         }
         
         // Request current online users list
@@ -323,6 +344,27 @@ const SafeFloatingChat = () => {
       socket.emit('register-presence', {
         userId: user._id || user.id,
         username: user.username || user.email || 'Anonymous'
+      });
+      
+      // Ensure current user is in activeUsers list with correct status
+      setActiveUsers(prev => {
+        const currentUserId = user._id || user.id;
+        const userExists = prev.some(u => u.id === currentUserId);
+        
+        if (!userExists) {
+          return [...prev, {
+            id: currentUserId,
+            username: user.username || user.email || 'Anonymous',
+            status: 'online',
+            role: user.role || 'user',
+            isInChat: isUserInChat
+          }];
+        }
+        
+        // Update existing user with current chat status
+        return prev.map(u => 
+          u.id === currentUserId ? { ...u, isInChat: isUserInChat } : u
+        );
       });
       
       // Request current online users
@@ -644,13 +686,35 @@ const SafeFloatingChat = () => {
       
       setIsUserInChat(true);
       
+      // Immediately update the activeUsers list to show current user as "in chat"
+      setActiveUsers(prev => {
+        const currentUserId = user._id || user.id;
+        const updatedUsers = prev.map(u => 
+          u.id === currentUserId ? { ...u, isInChat: true } : u
+        );
+        
+        // If current user is not in the list, add them
+        const userExists = prev.some(u => u.id === currentUserId);
+        if (!userExists) {
+          updatedUsers.push({
+            id: currentUserId,
+            username: user.username || user.email || 'Anonymous',
+            status: 'online',
+            role: user.role || 'user',
+            isInChat: true
+          });
+        }
+        
+        return updatedUsers;
+      });
+      
       // Join chat via Socket.IO
       socket.emit('join-chat', {
         userId: user._id || user.id,
         username: user.username || user.email || 'Anonymous'
       });
       
-      console.log('🚀 Joining chat via Socket.IO');
+      console.log('🚀 Joining chat via Socket.IO and updating local status');
       
       // Show welcome popup if not shown before
       if (!hasShownWelcome) {
@@ -669,13 +733,21 @@ const SafeFloatingChat = () => {
     if (user && isUserInChat && socket && isConnected) {
       setIsUserInChat(false);
       
+      // Immediately update the activeUsers list to show current user as "online" but not "in chat"
+      setActiveUsers(prev => {
+        const currentUserId = user._id || user.id;
+        return prev.map(u => 
+          u.id === currentUserId ? { ...u, isInChat: false } : u
+        );
+      });
+      
       // Emit leave-chat event instead of disconnecting
       socket.emit('leave-chat', {
         userId: user._id || user.id,
         username: user.username || user.email || 'Anonymous'
       });
       
-      console.log('👋 Leaving chat via Socket.IO (keeping connection)');
+      console.log('👋 Leaving chat via Socket.IO (keeping connection) and updating local status');
     }
   };
   
