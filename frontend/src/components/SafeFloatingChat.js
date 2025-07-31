@@ -55,6 +55,28 @@ const SafeFloatingChat = () => {
     try {
       const serverUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
       
+      console.log('📊 [DEBUG] fetchOnlineUsers called');
+      console.log('📊 [DEBUG] Server URL:', serverUrl);
+      console.log('📊 [DEBUG] User:', user ? (user.username || user.email) : 'null');
+      
+      // Test the chat route first
+      try {
+        console.log('📊 [DEBUG] Testing chat route...');
+        const testResponse = await fetch(`${serverUrl}/API/chat/test`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        console.log('📊 [DEBUG] Test response status:', testResponse.status);
+        if (testResponse.ok) {
+          const testData = await testResponse.json();
+          console.log('📊 [DEBUG] Test response data:', testData);
+        } else {
+          console.log('❌ [DEBUG] Test response failed:', testResponse.statusText);
+        }
+      } catch (testError) {
+        console.error('❌ [DEBUG] Test request failed:', testError);
+      }
+      
       // Prepare headers with authentication if user is logged in
       const headers = {
         'Content-Type': 'application/json'
@@ -62,12 +84,20 @@ const SafeFloatingChat = () => {
       
       if (user && user._id) {
         headers['x-user-id'] = user._id;
+        console.log('📊 [DEBUG] Adding auth header for user:', user._id);
+      } else {
+        console.log('📊 [DEBUG] No user, making public request');
       }
+      
+      console.log('📊 [DEBUG] Request headers:', headers);
       
       const response = await fetch(`${serverUrl}/API/chat/online`, {
         method: 'GET',
         headers: headers
       });
+      
+      console.log('📊 [DEBUG] Response status:', response.status);
+      console.log('📊 [DEBUG] Response ok:', response.ok);
       
       if (!response.ok) {
         if (response.status === 401) {

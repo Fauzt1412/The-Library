@@ -226,11 +226,17 @@ class ChatController {
 
   static async getOnlineUsers(req, res) {
     try {
+      console.log('📊 [PUBLIC ENDPOINT] Getting online users');
+      console.log('📊 Request method:', req.method);
+      console.log('📊 Request headers:', req.headers);
+      console.log('📊 Request query:', req.query);
+      console.log('📊 Request body:', req.body);
+      
       const socketService = require('../../services/socketService');
       
       // This endpoint is public - no authentication required
       // Online users should be visible to everyone
-      console.log('📊 Getting online users - public endpoint');
+      console.log('📊 This is a PUBLIC endpoint - no auth required');
       
       // Get all connected users (including those not in chat)
       const allConnectedUsers = socketService.getAllConnectedUsersList();
@@ -242,7 +248,7 @@ class ChatController {
       
       console.log(`📊 Returning ${connectedCount} connected users, ${chatCount} in chat`);
       
-      res.json({
+      const response = {
         success: true,
         connected: {
           count: connectedCount,
@@ -254,11 +260,20 @@ class ChatController {
         },
         // For backward compatibility
         onlineCount: connectedCount,
-        users: allConnectedUsers
-      });
+        users: allConnectedUsers,
+        // Debug info
+        timestamp: new Date().toISOString(),
+        endpoint: 'PUBLIC - /chat/online'
+      };
+      
+      console.log('📊 Sending response:', JSON.stringify(response, null, 2));
+      
+      res.status(200).json(response);
     } catch (error) {
-      console.error('Error getting online users:', error);
-      res.status(500).json({
+      console.error('❌ Error getting online users:', error);
+      console.error('❌ Error stack:', error.stack);
+      
+      const errorResponse = {
         success: false,
         message: 'Failed to get online users',
         error: error.message,
@@ -271,8 +286,14 @@ class ChatController {
           users: []
         },
         onlineCount: 0,
-        users: []
-      });
+        users: [],
+        timestamp: new Date().toISOString(),
+        endpoint: 'PUBLIC - /chat/online'
+      };
+      
+      console.log('❌ Sending error response:', JSON.stringify(errorResponse, null, 2));
+      
+      res.status(500).json(errorResponse);
     }
   }
 }
