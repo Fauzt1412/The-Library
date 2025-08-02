@@ -18,12 +18,14 @@ class SocketService {
           'http://localhost:3000',
           'http://127.0.0.1:3000',
           'https://the-library-seven.vercel.app',
+          'https://the-library-a11t.onrender.com',
           process.env.FRONTEND_URL
         ].filter(Boolean),
         methods: ['GET', 'POST'],
         credentials: true
       },
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      allowEIO3: true
     });
 
     this.setupEventHandlers();

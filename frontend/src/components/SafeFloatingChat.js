@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import SimpleChatFallback from './SimpleChatFallback';
 import '../styles/floating-chat.css';
 
 // Safe dynamic import for socket.io-client
@@ -36,7 +35,7 @@ const SafeFloatingChat = () => {
     window.location.hostname !== 'localhost' && 
     window.location.hostname !== '127.0.0.1';
   const hasBackendUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL;
-  const shouldDisableChat = isProduction && !hasBackendUrl;
+  const shouldDisableChat = false; // Enable chat in production since we have Render backend
   
   // Get user from AuthContext instead of local state
   const { user, isAuthenticated } = useAuth();
@@ -138,7 +137,12 @@ const SafeFloatingChat = () => {
   // Fetch online users via HTTP API (for non-logged-in users or as fallback)
   const fetchOnlineUsers = useCallback(async () => {
     try {
-      const serverUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
+      let serverUrl;
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        serverUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
+      } else {
+        serverUrl = process.env.REACT_APP_API_URL || 'https://the-library-a11t.onrender.com';
+      }
       
       console.log('📊 [DEBUG] fetchOnlineUsers called');
       console.log('📊 [DEBUG] Server URL:', serverUrl);
@@ -310,8 +314,8 @@ const SafeFloatingChat = () => {
       // Development environment
       serverUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL || 'http://localhost:1412';
     } else {
-      // Production environment - use same backend as other APIs
-      serverUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL;
+      // Production environment - use Render backend
+      serverUrl = process.env.REACT_APP_API_URL || 'https://the-library-a11t.onrender.com';
     }
     
     console.log('🌐 Connecting to server:', serverUrl);
@@ -1188,10 +1192,52 @@ const SafeFloatingChat = () => {
     );
   }
   
-  // If socket.io is not available and we've tried loading it, use simple fallback
+  // If socket.io is not available and we've tried loading it, show disabled state
   if (!io && socketIOLoaded === false) {
-    console.log('🔄 Using SimpleChatFallback due to socket.io unavailability');
-    return <SimpleChatFallback />;
+    console.log('🔄 Socket.io unavailable, showing disabled chat');
+    return (
+      <div 
+        className="floating-chat-toggle disabled"
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          width: '60px',
+          height: '60px',
+          background: 'linear-gradient(135deg, #6c757d, #5a6268)',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'not-allowed',
+          boxShadow: '0 4px 20px rgba(108, 117, 125, 0.3)',
+          zIndex: 1000,
+          opacity: 0.7
+        }}
+        title="Chat unavailable - dependency loading issue"
+      >
+        <i className="fas fa-comments" style={{ color: 'white', fontSize: '24px' }}></i>
+        <div 
+          style={{
+            position: 'absolute',
+            top: '-8px',
+            right: '-8px',
+            background: '#ffc107',
+            color: '#212529',
+            borderRadius: '50%',
+            width: '20px',
+            height: '20px',
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold'
+          }}
+        >
+          !
+        </div>
+      </div>
+    );
   }
   
   // Show loading state while trying to load socket.io asynchronously

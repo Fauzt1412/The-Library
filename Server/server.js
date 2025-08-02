@@ -21,6 +21,7 @@ const allowedOrigins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'https://the-library-seven.vercel.app', // Your actual Vercel URL
+    'https://the-library-a11t.onrender.com', // Your Render backend URL
     process.env.FRONTEND_URL // Additional frontend URL from environment
 ].filter(Boolean); // Remove undefined values
 
