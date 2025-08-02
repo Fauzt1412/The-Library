@@ -451,8 +451,9 @@
 }
 
 /* Online Users Panel - Outside Chat Box */
+
 .online-users-panel {
-  position: fixed;
+  position: absolute;
   top: 100px; /* Position below navbar (navbar is ~80px + some margin) */
   right: 20px;
   width: 350px; /* Increased from 280px */
@@ -467,12 +468,14 @@
   /* Dragging styles */
   transition: box-shadow 0.2s ease !important;
   user-select: none !important;
+  cursor: grab !important;
 }
 
 .online-users-panel.dragging {
   box-shadow: 0 15px 50px var(--card-shadow) !important;
   z-index: 1002 !important;
   animation: none !important;
+  cursor: grabbing;
 }
 
 @keyframes slideInFromRight {

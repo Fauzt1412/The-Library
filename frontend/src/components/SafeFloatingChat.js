@@ -3,6 +3,7 @@ import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import '../styles/floating-chat.css';
 
+
 // Enhanced safe floating chat component with all original features
 const SafeFloatingChat = () => {
   // Environment detection (safe to call before hooks)
@@ -11,6 +12,49 @@ const SafeFloatingChat = () => {
     window.location.hostname !== '127.0.0.1';
   const hasBackendUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL;
   const shouldDisableChat = isProduction && !hasBackendUrl;
+
+  //moving the panel
+  let isDragging = false;
+let offsetX = 0;
+let offsetY = 0;
+let currentPanel = null;
+
+document.addEventListener('mousedown', (e) => {
+  const panel = e.target.closest('.online-users-panel');
+  if (!panel) return;
+
+  isDragging = true;
+  currentPanel = panel;
+  panel.classList.add('dragging');
+
+  const rect = panel.getBoundingClientRect();
+  offsetX = e.clientX - rect.left;
+  offsetY = e.clientY - rect.top;
+
+  // Allow left positioning
+  panel.style.left = rect.left + 'px';
+  panel.style.top = rect.top + 'px';
+  panel.style.right = 'auto';
+  panel.style.position = 'absolute'; // make sure this is set
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging || !currentPanel) return;
+
+  const x = e.clientX - offsetX;
+  const y = e.clientY - offsetY;
+
+  currentPanel.style.left = `${x}px`;
+  currentPanel.style.top = `${y}px`;
+});
+
+document.addEventListener('mouseup', () => {
+  if (isDragging && currentPanel) {
+    currentPanel.classList.remove('dragging');
+  }
+  isDragging = false;
+  currentPanel = null;
+});
   
   // Get user from AuthContext instead of local state
   const { user, isAuthenticated } = useAuth();
@@ -1033,7 +1077,6 @@ const SafeFloatingChat = () => {
                     <div className="user-status-dot offline"></div>
                     <span className="user-info">
                       <span className="username">No users online</span>
-                      <span className="user-status-text">Log in to see online users</span>
                     </span>
                   </div>
                 ) : activeUsers.length === 0 && user ? (
