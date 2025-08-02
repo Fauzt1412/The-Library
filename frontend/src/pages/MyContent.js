@@ -162,6 +162,19 @@ const MyContent = () => {
       // Remove currentImageUrl from proposed changes
       delete proposedChanges.currentImageUrl;
       
+      // Remove null/undefined image fields to avoid overwriting existing images
+      // when user didn't intend to change the image
+      if (proposedChanges.coverImage === null || proposedChanges.coverImage === undefined) {
+        delete proposedChanges.coverImage;
+        console.log('🖼️ Removed null/undefined coverImage from proposed changes');
+      }
+      
+      // Also remove cloudinaryData if coverImage is null/undefined
+      if (!proposedChanges.coverImage) {
+        delete proposedChanges.cloudinaryData;
+        console.log('🖼️ Removed cloudinaryData since no new image was provided');
+      }
+      
       // Filter out empty links
       if (selectedContent.contentType === 'book') {
         proposedChanges.readingLinks = editForm.readingLinks.filter(link => link.name && link.url);

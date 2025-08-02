@@ -321,12 +321,32 @@ const ApproveEditRequest = async (req, res) => {
         // Prepare update data with proper field mapping
         const updateData = { ...editRequest.proposedChanges };
         
+        // Remove null/undefined image fields to prevent overwriting existing images
+        // when user didn't intend to change the image
+        if (updateData.coverImage === null || updateData.coverImage === undefined) {
+            delete updateData.coverImage;
+            console.log('🖼️ ApproveEditRequest - Removed null/undefined coverImage to preserve existing image');
+        }
+        
+        // Also check for Coverpage field (used by books)
+        if (updateData.Coverpage === null || updateData.Coverpage === undefined) {
+            delete updateData.Coverpage;
+            console.log('🖼️ ApproveEditRequest - Removed null/undefined Coverpage to preserve existing image');
+        }
+        
+        // Remove null/undefined cloudinaryData
+        if (updateData.cloudinaryData === null || updateData.cloudinaryData === undefined) {
+            delete updateData.cloudinaryData;
+            console.log('🖼️ ApproveEditRequest - Removed null/undefined cloudinaryData');
+        }
+        
         // Handle image field mapping and Cloudinary data
         if (editRequest.contentType === 'book') {
-            // For books, map coverImage to Coverpage if provided
-            if (updateData.coverImage) {
+            // For books, map coverImage to Coverpage if provided and not null
+            if (updateData.coverImage && updateData.coverImage !== null) {
                 updateData.Coverpage = updateData.coverImage;
                 delete updateData.coverImage; // Remove the temporary field
+                console.log('📷 ApproveEditRequest - Mapped coverImage to Coverpage for book');
             }
             
             // Handle Cloudinary data for books
