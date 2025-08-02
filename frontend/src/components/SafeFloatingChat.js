@@ -1,7 +1,33 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
+import SimpleChatFallback from './SimpleChatFallback';
 import '../styles/floating-chat.css';
+
+// Safe dynamic import for socket.io-client
+let io = null;
+
+// Try to import socket.io-client safely
+const loadSocketIO = async () => {
+  try {
+    const socketModule = await import('socket.io-client');
+    io = socketModule.default || socketModule.io || socketModule;
+    console.log('✅ socket.io-client loaded successfully');
+    return true;
+  } catch (error) {
+    console.warn('❌ socket.io-client not available, chat will use fallback mode:', error.message);
+    return false;
+  }
+};
+
+// Try synchronous import first (for bundled environments)
+try {
+  const socketModule = require('socket.io-client');
+  io = socketModule.default || socketModule.io || socketModule;
+  console.log('✅ socket.io-client loaded synchronously');
+} catch (error) {
+  console.warn('⚠️ Synchronous socket.io-client import failed, will try async:', error.message);
+  // Async import will be attempted in useEffect
+}
 
 // Enhanced safe floating chat component with all original features
 const SafeFloatingChat = () => {
@@ -45,6 +71,7 @@ const SafeFloatingChat = () => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [isRejoiningChat, setIsRejoiningChat] = useState(false);
   const [pinnedNotices, setPinnedNotices] = useState([]);
+  const [socketIOLoaded, setSocketIOLoaded] = useState(io ? true : null); // null = loading, true = loaded, false = failed
   
   const messagesEndRef = useRef(null);
   const chatInputRef = useRef(null);
@@ -246,12 +273,32 @@ const SafeFloatingChat = () => {
     }
   }, [user]);
 
+  // Try to load socket.io-client asynchronously if not already loaded
+  useEffect(() => {
+    if (!io && socketIOLoaded === null) {
+      console.log('🔄 Attempting to load socket.io-client asynchronously...');
+      loadSocketIO().then((loaded) => {
+        setSocketIOLoaded(loaded);
+        if (loaded) {
+          console.log('✅ socket.io-client loaded asynchronously, chat features now available');
+        } else {
+          console.log('❌ socket.io-client failed to load asynchronously, using fallback');
+        }
+      });
+    }
+  }, [socketIOLoaded]);
+
   // Socket.IO connection
   useEffect(() => {
-    // Don't attempt connection if chat is disabled
-    if (shouldDisableChat) {
-      console.log('🙫 Chat disabled in production - no backend URL configured');
-      setConnectionError('Chat unavailable in production');
+    // Don't attempt connection if chat is disabled or socket.io is not available
+    if (shouldDisableChat || !io) {
+      if (!io) {
+        console.log('🙫 socket.io-client not available - using HTTP-only mode');
+        setConnectionError('Real-time chat unavailable - using HTTP mode');
+      } else {
+        console.log('🙫 Chat disabled in production - no backend URL configured');
+        setConnectionError('Chat unavailable in production');
+      }
       // Still try to fetch online users via HTTP for non-logged-in users
       fetchOnlineUsers();
       return;
@@ -547,8 +594,8 @@ const SafeFloatingChat = () => {
   useEffect(() => {
     let interval;
     
-    // Only set up periodic refresh if socket is not connected or chat is disabled
-    if (!isConnected || shouldDisableChat) {
+    // Only set up periodic refresh if socket is not connected, chat is disabled, or socket.io is not available
+    if (!isConnected || shouldDisableChat || !io) {
       console.log('🔄 Setting up periodic online users refresh (socket not available)');
       
       // Fetch immediately
@@ -566,15 +613,15 @@ const SafeFloatingChat = () => {
         console.log('🔄 Cleared periodic online users refresh');
       }
     };
-  }, [isConnected, shouldDisableChat, fetchOnlineUsers]);
+  }, [isConnected, shouldDisableChat, io, fetchOnlineUsers]);
   
   // Refresh online users when user logs in/out
   useEffect(() => {
-    if (!isConnected || shouldDisableChat) {
+    if (!isConnected || shouldDisableChat || !io) {
       // If socket is not available, refresh via HTTP when user changes
       fetchOnlineUsers();
     }
-  }, [user, isConnected, shouldDisableChat, fetchOnlineUsers]);
+  }, [user, isConnected, shouldDisableChat, io, fetchOnlineUsers]);
   
   // Handle user authentication changes
   useEffect(() => {
@@ -729,14 +776,14 @@ const SafeFloatingChat = () => {
     setShowUserList(prev => {
       const newShowUserList = !prev;
       
-      // Refresh online users when opening the list (especially useful when socket is not connected)
-      if (newShowUserList && (!isConnected || shouldDisableChat)) {
+      // Refresh online users when opening the list (especially useful when socket is not connected or socket.io is not available)
+      if (newShowUserList && (!isConnected || shouldDisableChat || !io)) {
         fetchOnlineUsers();
       }
       
       return newShowUserList;
     });
-  }, [isConnected, shouldDisableChat, fetchOnlineUsers]);
+  }, [isConnected, shouldDisableChat, io, fetchOnlineUsers]);
   
   const handleSettingsToggle = () => {
     setShowSettings(!showSettings);
@@ -1141,8 +1188,42 @@ const SafeFloatingChat = () => {
     );
   }
   
-  // If chat should be disabled in production, show a placeholder
-  if (shouldDisableChat) {
+  // If socket.io is not available and we've tried loading it, use simple fallback
+  if (!io && socketIOLoaded === false) {
+    console.log('🔄 Using SimpleChatFallback due to socket.io unavailability');
+    return <SimpleChatFallback />;
+  }
+  
+  // Show loading state while trying to load socket.io asynchronously
+  if (!io && socketIOLoaded === null) {
+    return (
+      <div 
+        className="floating-chat-toggle loading"
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          width: '60px',
+          height: '60px',
+          background: 'linear-gradient(135deg, #007bff, #0056b3)',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'wait',
+          boxShadow: '0 4px 20px rgba(0, 123, 255, 0.3)',
+          zIndex: 1000,
+          opacity: 0.8
+        }}
+        title="Loading chat system..."
+      >
+        <i className="fas fa-spinner fa-spin" style={{ color: 'white', fontSize: '24px' }}></i>
+      </div>
+    );
+  }
+  
+  // If chat should be disabled in production or socket.io is not available, show a placeholder
+  if (shouldDisableChat || !io) {
     return (
       <div 
         className="floating-chat-toggle disabled"
@@ -1162,7 +1243,7 @@ const SafeFloatingChat = () => {
           zIndex: 1000,
           opacity: 0.7
         }}
-        title="Chat is currently unavailable in production. Backend server needed."
+        title={!io ? "Chat unavailable - socket.io-client dependency missing" : "Chat is currently unavailable in production. Backend server needed."}
       >
         <i className="fas fa-comments" style={{ color: 'white', fontSize: '24px' }}></i>
         <div 
