@@ -43,12 +43,70 @@ const SafeFloatingChat = () => {
   const [connectionError, setConnectionError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [isRejoiningChat, setIsRejoiningChat] = useState(false);
   const [pinnedNotices, setPinnedNotices] = useState([]);
   
   const messagesEndRef = useRef(null);
   const chatInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const chatInfoRef = useRef(null);
+  
+  // Handle joining chat - defined early to be used in socket error handler
+  const handleJoinChat = useCallback(() => {
+    console.log('🚀 handleJoinChat called - User:', user ? (user.username || user.email) : 'null', 'isUserInChat:', isUserInChat);
+    
+    if (user && !isUserInChat) {
+      if (!socket || !isConnected) {
+        alert('Chat server is not connected. Please try again.');
+        return;
+      }
+      
+      setIsUserInChat(true);
+      
+      // Immediately update the activeUsers list to show current user as "in chat"
+      setActiveUsers(prev => {
+        const currentUserId = user._id || user.id;
+        const updatedUsers = prev.map(u => 
+          u.id === currentUserId ? { ...u, isInChat: true } : u
+        );
+        
+        // If current user is not in the list, add them
+        const userExists = prev.some(u => u.id === currentUserId);
+        if (!userExists) {
+          updatedUsers.push({
+            id: currentUserId,
+            username: user.username || user.email || 'Anonymous',
+            status: 'online',
+            role: user.role || 'user',
+            isInChat: true
+          });
+        }
+        
+        return updatedUsers;
+      });
+      
+      // Join chat via Socket.IO
+      if (socket) {
+        socket.emit('join-chat', {
+          userId: user._id || user.id,
+          username: user.username || user.email || 'Anonymous'
+        });
+      }
+      
+      console.log('🚀 Joining chat via Socket.IO and updating local status');
+      
+      // Show welcome popup if not shown before
+      if (!hasShownWelcome) {
+        setShowWelcomePopup(true);
+        setHasShownWelcome(true);
+        
+        // Auto-hide after 15 seconds
+        setTimeout(() => {
+          setShowWelcomePopup(false);
+        }, 15000);
+      }
+    }
+  }, [user, isUserInChat, socket, isConnected, hasShownWelcome]);
   
   // Fetch online users via HTTP API (for non-logged-in users or as fallback)
   const fetchOnlineUsers = useCallback(async () => {
@@ -283,6 +341,12 @@ const SafeFloatingChat = () => {
       newSocket.on('new-message', (message) => {
         console.log('📨 New message received:', message);
         
+        // If this is our own message and we weren't marked as in chat, update status
+        if (user && message.username === (user.username || user.email) && !isUserInChat) {
+          console.log('🚀 Auto-updating user chat status after successful message send');
+          setIsUserInChat(true);
+        }
+        
         // Handle notice messages separately
         if (message.isNotice && message.messageType === 'admin') {
           handleNewNotice(message);
@@ -424,7 +488,47 @@ const SafeFloatingChat = () => {
       
       newSocket.on('error', (error) => {
         console.error('❌ Socket error:', error);
-        alert(error.message || 'Chat error occurred');
+        
+        // Handle specific authentication errors
+        if (error.message === 'User not authenticated') {
+          console.log('🔒 User not authenticated - resetting chat state and attempting to rejoin');
+          
+          // Reset chat state to force user to rejoin
+          setIsUserInChat(false);
+          
+          // If user is logged in, automatically attempt to rejoin after a short delay
+          if (user && user._id) {
+            console.log('ℹ️ Chat session expired. Auto-rejoining in 1 second...');
+            setIsRejoiningChat(true);
+            setTimeout(() => {
+              console.log('🔄 Auto-rejoining chat after authentication error');
+              handleJoinChat();
+              setIsRejoiningChat(false);
+            }, 1000);
+          } else {
+            console.log('ℹ️ Chat session expired. Please log in and rejoin the chat.');
+          }
+        } else if (error.message === 'Failed to join chat') {
+          console.log('❌ Failed to join chat - will retry automatically');
+          // Reset state and retry joining
+          setIsUserInChat(false);
+          if (user && user._id) {
+            setIsRejoiningChat(true);
+            setTimeout(() => {
+              console.log('🔄 Retrying chat join after failure');
+              handleJoinChat();
+              setIsRejoiningChat(false);
+            }, 2000);
+          }
+        } else if (error.message === 'Failed to send message') {
+          console.log('❌ Failed to send message - user may need to rejoin chat');
+          // Reset chat state if message sending fails due to authentication
+          setIsUserInChat(false);
+        } else {
+          // For other errors, show the original alert
+          console.error('❌ Unhandled socket error:', error.message);
+          alert(error.message || 'Chat error occurred');
+        }
       });
       
       setSocket(newSocket);
@@ -437,7 +541,7 @@ const SafeFloatingChat = () => {
       console.error('❌ Failed to initialize socket:', error);
       setConnectionError('Failed to initialize chat connection');
     }
-  }, [shouldDisableChat, isProduction, user, isUserInChat, fetchOnlineUsers, isOpen]); // Add required dependencies
+  }, [shouldDisableChat, isProduction, user, isUserInChat, fetchOnlineUsers, isOpen, handleJoinChat]); // Add required dependencies
   
   // Periodic refresh of online users (for when socket is not available)
   useEffect(() => {
@@ -831,59 +935,7 @@ const SafeFloatingChat = () => {
     document.addEventListener('mouseup', handleMouseUp);
   };
   
-  const handleJoinChat = () => {
-    console.log('🚀 handleJoinChat called - User:', user ? (user.username || user.email) : 'null', 'isUserInChat:', isUserInChat);
-    
-    if (user && !isUserInChat) {
-      if (!socket || !isConnected) {
-        alert('Chat server is not connected. Please try again.');
-        return;
-      }
-      
-      setIsUserInChat(true);
-      
-      // Immediately update the activeUsers list to show current user as "in chat"
-      setActiveUsers(prev => {
-        const currentUserId = user._id || user.id;
-        const updatedUsers = prev.map(u => 
-          u.id === currentUserId ? { ...u, isInChat: true } : u
-        );
-        
-        // If current user is not in the list, add them
-        const userExists = prev.some(u => u.id === currentUserId);
-        if (!userExists) {
-          updatedUsers.push({
-            id: currentUserId,
-            username: user.username || user.email || 'Anonymous',
-            status: 'online',
-            role: user.role || 'user',
-            isInChat: true
-          });
-        }
-        
-        return updatedUsers;
-      });
-      
-      // Join chat via Socket.IO
-      socket.emit('join-chat', {
-        userId: user._id || user.id,
-        username: user.username || user.email || 'Anonymous'
-      });
-      
-      console.log('🚀 Joining chat via Socket.IO and updating local status');
-      
-      // Show welcome popup if not shown before
-      if (!hasShownWelcome) {
-        setShowWelcomePopup(true);
-        setHasShownWelcome(true);
-        
-        // Auto-hide after 15 seconds
-        setTimeout(() => {
-          setShowWelcomePopup(false);
-        }, 15000);
-      }
-    }
-  };
+
   
   const handleLeaveChat = () => {
     if (user && isUserInChat && socket && isConnected) {
@@ -911,6 +963,13 @@ const SafeFloatingChat = () => {
     e.preventDefault();
     
     if (!newMessage.trim() || !user || !socket || !isConnected) return;
+    
+    // If user is not in chat, try to join first
+    if (!isUserInChat) {
+      console.log('🚀 User not in chat, attempting to join before sending message');
+      handleJoinChat();
+      // Continue with sending message - backend will handle auto-join if needed
+    }
     
     setIsLoading(true);
     
@@ -1525,16 +1584,16 @@ const SafeFloatingChat = () => {
                   Log In
                 </button>
               </div>
-            ) : !isUserInChat ? (
-              <div className="join-chat-prompt">
-                <p className="mb-2 text-center">Join the chat to start participating in our community discussions</p>
-                <button className="btn btn-primary w-100" onClick={handleJoinChat}>
-                  <i className="fas fa-sign-in-alt me-2"></i>
-                  Join Chat
-                </button>
-              </div>
             ) : (
               <>
+                {isRejoiningChat && (
+                  <div className="rejoining-notice">
+                    <p className="mb-2 text-center text-info">
+                      <i className="fas fa-spinner fa-spin me-2"></i>
+                      Connecting to chat...
+                    </p>
+                  </div>
+                )}
                 <div className="chat-input-controls">
                   <div className="left-controls">
                     <div className="emoji-picker-container" ref={emojiPickerRef}>
@@ -1648,7 +1707,7 @@ const SafeFloatingChat = () => {
                       ref={chatInputRef}
                       type="text"
                       className={`chat-input ${isNoticeMode ? 'notice-input' : ''}`}
-                      placeholder={isNoticeMode ? '📢 Type an important notice...' : 'Share your thoughts with the community...'}
+                      placeholder={isNoticeMode ? '📢 Type an important notice...' : isUserInChat ? 'Share your thoughts with the community...' : 'Type a message to join the conversation...'}
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       disabled={isLoading}
@@ -1678,15 +1737,17 @@ const SafeFloatingChat = () => {
                         <small>{newMessage.length}/500</small>
                       </span>
                     </div>
-                    <button 
-                      type="button" 
-                      className="btn btn-outline-danger btn-sm"
-                      onClick={handleLeaveChat}
-                      title="Leave chat"
-                    >
-                      <i className="fas fa-sign-out-alt me-1"></i>
-                      Leave
-                    </button>
+                    {isUserInChat && (
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={handleLeaveChat}
+                        title="Leave chat"
+                      >
+                        <i className="fas fa-sign-out-alt me-1"></i>
+                        Leave
+                      </button>
+                    )}
                   </div>
                 </form>
               </>

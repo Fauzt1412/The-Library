@@ -140,7 +140,41 @@ class SocketService {
 
       socket.on('send-message', async (data) => {
         try {
-          const userId = this.userSockets.get(socket.id);
+          // First check if user is in chat room (preferred)
+          let userId = this.userSockets.get(socket.id);
+          
+          // If not in chat room, check if they're at least connected with presence
+          if (!userId) {
+            const userInfo = this.socketToUser.get(socket.id);
+            if (userInfo && userInfo.userId) {
+              userId = userInfo.userId;
+              console.log(`⚠️ User ${userInfo.username} sending message without joining chat room - auto-joining`);
+              
+              // Auto-join them to chat room
+              const user = await User.findById(userId).select('username role');
+              if (user) {
+                // Add to chat room
+                this.onlineUsers.set(userId, {
+                  socketId: socket.id,
+                  username: user.username,
+                  role: user.role || 'user'
+                });
+                this.userSockets.set(socket.id, userId);
+                socket.join('chat-room');
+                
+                // Update connected user status
+                if (this.connectedUsers.has(userId)) {
+                  const userInfo = this.connectedUsers.get(userId);
+                  userInfo.isInChat = true;
+                  this.connectedUsers.set(userId, userInfo);
+                }
+                
+                console.log(`✅ Auto-joined ${user.username} to chat room`);
+              }
+            }
+          }
+          
+          // Final check - if still no userId, then truly not authenticated
           if (!userId) {
             socket.emit('error', { message: 'User not authenticated' });
             return;
@@ -191,7 +225,15 @@ class SocketService {
 
       socket.on('delete-message', async (data) => {
         try {
-          const userId = this.userSockets.get(socket.id);
+          // Check if user is authenticated (either in chat or has presence)
+          let userId = this.userSockets.get(socket.id);
+          if (!userId) {
+            const userInfo = this.socketToUser.get(socket.id);
+            if (userInfo && userInfo.userId) {
+              userId = userInfo.userId;
+            }
+          }
+          
           if (!userId) {
             socket.emit('error', { message: 'User not authenticated' });
             return;
@@ -244,7 +286,15 @@ class SocketService {
 
       socket.on('clear-all-messages', async (data) => {
         try {
-          const userId = this.userSockets.get(socket.id);
+          // Check if user is authenticated (either in chat or has presence)
+          let userId = this.userSockets.get(socket.id);
+          if (!userId) {
+            const userInfo = this.socketToUser.get(socket.id);
+            if (userInfo && userInfo.userId) {
+              userId = userInfo.userId;
+            }
+          }
+          
           if (!userId) {
             socket.emit('error', { message: 'User not authenticated' });
             return;
@@ -279,7 +329,15 @@ class SocketService {
         console.log('Data:', data);
         
         try {
-          const userId = this.userSockets.get(socket.id);
+          // Check if user is authenticated (either in chat or has presence)
+          let userId = this.userSockets.get(socket.id);
+          if (!userId) {
+            const userInfo = this.socketToUser.get(socket.id);
+            if (userInfo && userInfo.userId) {
+              userId = userInfo.userId;
+            }
+          }
+          
           console.log('User ID from socket:', userId);
           
           if (!userId) {
