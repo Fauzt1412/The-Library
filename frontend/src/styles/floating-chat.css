@@ -464,6 +464,15 @@
   z-index: 1001;
   overflow: hidden;
   animation: slideInFromRight 0.3s ease;
+  /* Dragging styles */
+  transition: box-shadow 0.2s ease !important;
+  user-select: none !important;
+}
+
+.online-users-panel.dragging {
+  box-shadow: 0 15px 50px var(--card-shadow) !important;
+  z-index: 1002 !important;
+  animation: none !important;
 }
 
 @keyframes slideInFromRight {
@@ -486,6 +495,69 @@
   align-items: center;
   position: relative;
   gap: 20px; /* Add gap between tabs and close button */
+  /* Drag indicator styles */
+  cursor: grab !important;
+}
+
+.online-users-header:active {
+  cursor: grabbing !important;
+}
+
+.online-users-header:hover {
+  background: var(--bg-primary) !important;
+}
+
+.online-users-header.dragging {
+  cursor: grabbing !important;
+  background: var(--bg-primary) !important;
+}
+
+/* Drag indicator dots */
+.online-users-header::before {
+  content: '⋮⋮' !important;
+  position: absolute !important;
+  left: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: var(--text-muted) !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  opacity: 0.6 !important;
+  transition: all 0.2s ease !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+.online-users-header:hover::before {
+  color: var(--button-primary) !important;
+  opacity: 1 !important;
+}
+
+/* Drag tooltip */
+.online-users-header::after {
+  content: 'Drag to move' !important;
+  position: absolute !important;
+  top: -35px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  padding: 6px 10px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  white-space: nowrap !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: all 0.3s ease !important;
+  pointer-events: none !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 2px 8px var(--card-shadow) !important;
+  z-index: 1003 !important;
+}
+
+.online-users-header:hover::after {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 /* Users Tabs Styling */
@@ -494,6 +566,7 @@
   gap: 8px;
   flex: 1;
   max-width: calc(100% - 60px); /* Ensure tabs don't overlap close button */
+  margin-left: 20px !important; /* Make room for drag indicator */
 }
 
 .tab-btn {
@@ -3436,4 +3509,19 @@
   .welcome-popup-footer .fa-clock {
     animation: none;
   }
+}
+
+/* Drag handle styles */
+.drag-handle {
+  transition: all 0.2s ease !important;
+}
+
+.drag-handle:hover {
+  color: var(--button-primary) !important;
+  transform: translateY(-50%) scale(1.1) !important;
+}
+
+.drag-handle:active {
+  cursor: grabbing !important;
+  color: var(--button-primary) !important;
 }
