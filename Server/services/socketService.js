@@ -119,7 +119,13 @@ class SocketService {
           });
           this.userSockets.set(socket.id, userId);
 
-          socket.join('chat-room');
+          // Join chat room and wait for it to complete
+          await new Promise((resolve) => {
+            socket.join('chat-room', () => {
+              console.log(`🏠 User ${user.username} successfully joined chat-room`);
+              resolve();
+            });
+          });
 
           const recentMessages = await ChatMessage.getRecentMessages(50);
           socket.emit('recent-messages', recentMessages.reverse());
@@ -135,7 +141,10 @@ class SocketService {
           this.broadcastOnlineUsers();
           this.broadcastPresenceUpdate();
 
+          // Debug: Check final state
           console.log(`✅ User ${user.username} joined chat`);
+          console.log(`📊 Chat room now has ${this.onlineUsers.size} users:`, Array.from(this.onlineUsers.values()).map(u => u.username));
+          console.log(`🔗 Socket mappings:`, Array.from(this.userSockets.entries()).map(([socketId, userId]) => ({ socketId: socketId.substring(0, 8), userId })));
         } catch (error) {
           console.error('Error in join-chat:', error);
           socket.emit('error', { message: 'Failed to join chat' });
@@ -218,6 +227,11 @@ class SocketService {
           const savedMessage = await newMessage.save();
           await savedMessage.populate('user', 'username role');
 
+          // Get list of users in chat room for debugging
+          const chatRoomSockets = await this.io.in('chat-room').fetchSockets();
+          console.log(`📢 Sending message to chat-room with ${chatRoomSockets.length} sockets`);
+          console.log(`📢 Message type: ${finalMessageType}, isNotice: ${savedMessage.isNotice}`);
+          
           this.io.to('chat-room').emit('new-message', savedMessage);
 
           console.log(`💬 Message from ${user.username}: ${message.substring(0, 50)}...`);

@@ -226,12 +226,16 @@ document.addEventListener('mouseup', () => {
       
       // Real-time message events
       newSocket.on('new-message', (message) => {
-        console.log('📨 New message received:', message);
+        console.log('📨 [DEBUG] New message received:', message);
+        console.log('📨 [DEBUG] Message type:', message.messageType, 'isNotice:', message.isNotice);
+        console.log('📨 [DEBUG] From user:', message.username);
         
         // Handle notice messages separately
         if (message.isNotice && message.messageType === 'admin') {
+          console.log('📢 [DEBUG] Handling as admin notice');
           handleNewNotice(message);
         } else {
+          console.log('💬 [DEBUG] Adding to regular messages');
           setMessages(prev => [...prev, message]);
         }
         
