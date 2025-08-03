@@ -285,13 +285,7 @@ document.addEventListener('mouseup', () => {
           timestamp: data.timestamp,
           messageType: 'system'
         };
-        console.log('👋 Adding join message to chat:', joinMessage);
-        setMessages(prev => {
-          console.log('👋 Current messages before adding join:', prev.length);
-          const newMessages = [...prev, joinMessage];
-          console.log('👋 New messages after adding join:', newMessages.length);
-          return newMessages;
-        });
+        setMessages(prev => [...prev, joinMessage]);
       });
       
       // Handle user-left event for real-time updates
@@ -306,18 +300,10 @@ document.addEventListener('mouseup', () => {
           timestamp: data.timestamp,
           messageType: 'system'
         };
-        console.log('👋 Adding leave message to chat:', leaveMessage);
-        setMessages(prev => {
-          console.log('👋 Current messages before adding leave:', prev.length);
-          const newMessages = [...prev, leaveMessage];
-          console.log('👋 New messages after adding leave:', newMessages.length);
-          return newMessages;
-        });
+        setMessages(prev => [...prev, leaveMessage]);
       });
       
       newSocket.on('presence-updated', (data) => {
-        console.log('👥 Presence updated:', data.count);
-        
         const mappedUsers = data.users.map(user => ({
           id: user.userId,
           username: user.username,
@@ -751,24 +737,7 @@ document.addEventListener('mouseup', () => {
       
       setIsUserInChat(true);
       
-      // Immediately add current user to chat users list as fallback
-      setChatUsers(prev => {
-        const currentUserId = user._id || user.id;
-        const userExists = prev.some(u => u.id === currentUserId);
-        
-        if (!userExists) {
-          const newUser = {
-            id: currentUserId,
-            username: user.username || user.email || 'Anonymous',
-            status: 'online',
-            role: user.role || 'user'
-          };
-          return [...prev, newUser];
-        }
-        return prev;
-      });
-      
-      // Join chat via Socket.IO - the server will also update the chat users list
+      // Join chat via Socket.IO - the server will send us the current chat users list
       const joinData = {
         userId: user._id || user.id,
         username: user.username || user.email || 'Anonymous'

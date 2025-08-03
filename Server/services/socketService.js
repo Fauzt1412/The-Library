@@ -123,6 +123,14 @@ class SocketService {
           const recentMessages = await ChatMessage.getRecentMessages(50);
           socket.emit('recent-messages', recentMessages.reverse());
 
+          // Send current chat users list to the user who just joined
+          const currentChatUsers = this.getOnlineUsersList();
+          socket.emit('online-users-updated', {
+            count: currentChatUsers.length,
+            users: currentChatUsers
+          });
+          console.log(`📤 Sent current chat users to ${user.username}:`, currentChatUsers.length, 'users');
+
           // Emit to all users in chat room, including the user who just joined
           this.io.to('chat-room').emit('user-joined', {
             userId,
@@ -130,7 +138,7 @@ class SocketService {
             timestamp: new Date()
           });
 
-          // Broadcast to both chat room and all connected users
+          // Broadcast updated chat users list to ALL users (including the one who just joined)
           this.broadcastOnlineUsers();
           this.broadcastPresenceUpdate();
 
