@@ -360,7 +360,7 @@ document.addEventListener('mouseup', () => {
       console.error('❌ Failed to initialize socket:', error);
       setConnectionError('Failed to initialize chat connection');
     }
-  }, [shouldDisableChat, isProduction, user, isUserInChat, fetchOnlineUsers]); // Socket connection dependencies
+  }, [shouldDisableChat, isProduction, user, fetchOnlineUsers]); // Socket connection dependencies
   
   // Periodic refresh of online users (for when socket is not available)
   useEffect(() => {
@@ -427,7 +427,7 @@ document.addEventListener('mouseup', () => {
     } else {
       console.log('👤 No user authenticated in chat');
     }
-  }, [user, isUserInChat, socket, isConnected, fetchOnlineUsers]);
+  }, [user, socket, isConnected, fetchOnlineUsers]);
   
   // Auto-scroll to bottom
   useEffect(() => {
@@ -524,7 +524,7 @@ document.addEventListener('mouseup', () => {
       
       return newShowUserList;
     });
-  }, [isConnected, shouldDisableChat, fetchOnlineUsers]);
+  }, []);
   
   const handleSettingsToggle = () => {
     setShowSettings(!showSettings);
