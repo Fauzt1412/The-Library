@@ -360,7 +360,7 @@ document.addEventListener('mouseup', () => {
       console.error('❌ Failed to initialize socket:', error);
       setConnectionError('Failed to initialize chat connection');
     }
-  }, [shouldDisableChat, isProduction, user, isUserInChat, fetchOnlineUsers, isOpen]); // Add required dependencies
+  }, [shouldDisableChat, isProduction, user, isUserInChat, fetchOnlineUsers]); // Socket connection dependencies
   
   // Periodic refresh of online users (for when socket is not available)
   useEffect(() => {
