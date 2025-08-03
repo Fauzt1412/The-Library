@@ -511,7 +511,8 @@ class SocketService {
       role: info.role
     }));
 
-    this.io.to('chat-room').emit('online-users-updated', {
+    // Broadcast to ALL connected sockets, not just chat-room
+    this.io.emit('online-users-updated', {
       count: onlineUsersArray.length,
       users: onlineUsersArray
     });

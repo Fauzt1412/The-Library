@@ -102,11 +102,6 @@ document.addEventListener('mouseup', () => {
   
   // Fetch online users via HTTP API (for non-logged-in users or as fallback)
   const fetchOnlineUsers = useCallback(async () => {
-    // Temporarily disable HTTP API calls to prevent 401 errors
-    // This functionality will work when the backend chat API is properly set up
-    console.log('📊 [DEBUG] fetchOnlineUsers called - HTTP API disabled to prevent 401 errors');
-    console.log('📊 [DEBUG] User:', user ? (user.username || user.email) : 'null');
-    
     // For now, just ensure current user is in the list if logged in
     if (user && user._id) {
       setActiveUsers(prev => {
@@ -125,11 +120,6 @@ document.addEventListener('mouseup', () => {
         return prev;
       });
     }
-    
-    // TODO: Re-enable HTTP API calls when backend endpoints are ready:
-    // - /API/chat/test
-    // - /API/chat/online
-    // - /API/chat/online-direct
   }, [user]);
 
   // Socket.IO connection
@@ -213,9 +203,6 @@ document.addEventListener('mouseup', () => {
         
         // Request current online users list
         newSocket.emit('get-online-users');
-        
-        // Note: HTTP backup disabled to prevent 401 errors
-        // fetchOnlineUsers();
       });
       
       newSocket.on('disconnect', () => {
@@ -275,8 +262,24 @@ document.addEventListener('mouseup', () => {
         }
       });
       
+      newSocket.on('online-users-updated', (data) => {
+        console.log('👥 Chat users updated:', data.count);
+        
+        const mappedChatUsers = data.users.map(user => ({
+          id: user.userId,
+          username: user.username,
+          status: 'online',
+          role: user.role
+        }));
+        
+        setChatUsers(mappedChatUsers);
+      });
+      
+      // Handle user-joined event to update chat users immediately
       newSocket.on('user-joined', (data) => {
-        console.log('👋 User joined:', data.username);
+        console.log('👋 User joined chat:', data.username);
+        
+        // Add join message
         const joinMessage = {
           _id: 'join-' + Date.now(),
           username: 'System',
@@ -285,10 +288,29 @@ document.addEventListener('mouseup', () => {
           messageType: 'system'
         };
         setMessages(prev => [...prev, joinMessage]);
+        
+        // If this is the current user joining, add them to chat users
+        if (user && (data.userId === (user._id || user.id))) {
+          setChatUsers(prev => {
+            const userExists = prev.some(u => u.id === data.userId);
+            if (!userExists) {
+              return [...prev, {
+                id: data.userId,
+                username: data.username,
+                status: 'online',
+                role: user.role || 'user'
+              }];
+            }
+            return prev;
+          });
+        }
       });
       
+      // Handle user-left event to update chat users immediately  
       newSocket.on('user-left', (data) => {
-        console.log('👋 User left:', data.username);
+        console.log('👋 User left chat:', data.username);
+        
+        // Add leave message
         const leaveMessage = {
           _id: 'leave-' + Date.now(),
           username: 'System',
@@ -297,28 +319,13 @@ document.addEventListener('mouseup', () => {
           messageType: 'system'
         };
         setMessages(prev => [...prev, leaveMessage]);
-      });
-      
-      newSocket.on('online-users-updated', (data) => {
-        console.log('👥 Online users updated (chat members):', data.count);
-        console.log('👥 Chat users data:', data.users);
-        console.log('🔍 [DEBUG] Raw chat users data:', JSON.stringify(data, null, 2));
         
-        const mappedChatUsers = data.users.map(user => ({
-          id: user.userId,
-          username: user.username,
-          status: 'online',
-          role: user.role
-        }));
-        console.log('🔍 [DEBUG] Mapped chat users:', mappedChatUsers);
-        
-        setChatUsers(mappedChatUsers);
+        // Remove user from chat users
+        setChatUsers(prev => prev.filter(u => u.id !== data.userId));
       });
       
       newSocket.on('presence-updated', (data) => {
-        console.log('👥 Presence updated (all connected users):', data.count);
-        console.log('👥 Active users data:', data.users);
-        console.log('🔍 [DEBUG] Raw presence data:', JSON.stringify(data, null, 2));
+        console.log('👥 Presence updated:', data.count);
         
         const mappedUsers = data.users.map(user => ({
           id: user.userId,
@@ -326,15 +333,12 @@ document.addEventListener('mouseup', () => {
           status: 'online',
           role: user.role
         }));
-        console.log('🔍 [DEBUG] Mapped active users:', mappedUsers);
         
         setActiveUsers(mappedUsers);
       });
       
       newSocket.on('online-users-list', (data) => {
         console.log('👥 Online users list received:', data.count);
-        console.log('👥 Online users list data:', data.users);
-        console.log('🔍 [DEBUG] Raw online users data:', JSON.stringify(data, null, 2));
         
         const mappedUsers = data.users.map(user => ({
           id: user.userId,
@@ -342,7 +346,6 @@ document.addEventListener('mouseup', () => {
           status: 'online',
           role: user.role
         }));
-        console.log('🔍 [DEBUG] Mapped online users:', mappedUsers);
         
         setActiveUsers(mappedUsers);
       });
@@ -384,47 +387,14 @@ document.addEventListener('mouseup', () => {
   
   // Periodic refresh of online users (for when socket is not available)
   useEffect(() => {
-    // Disabled to prevent 401 errors - will be re-enabled when backend API is ready
-    console.log('🔄 Periodic online users refresh disabled to prevent 401 errors');
-    
-    // TODO: Re-enable when backend chat API endpoints are implemented
-    /*
-    let interval;
-    
-    // Only set up periodic refresh if socket is not connected or chat is disabled
-    if (!isConnected || shouldDisableChat) {
-      console.log('🔄 Setting up periodic online users refresh (socket not available)');
-      
-      // Fetch immediately
-      fetchOnlineUsers();
-      
-      // Then fetch every 30 seconds
-      interval = setInterval(() => {
-        fetchOnlineUsers();
-      }, 30000);
-    }
-    
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-        console.log('🔄 Cleared periodic online users refresh');
-      }
-    };
-    */
+    // Disabled for now
+    console.log('Periodic online users refresh disabled');
   }, [isConnected, shouldDisableChat, fetchOnlineUsers]);
   
   // Refresh online users when user logs in/out
   useEffect(() => {
-    // Disabled to prevent 401 errors - will be re-enabled when backend API is ready
-    console.log('🔄 User change refresh disabled to prevent 401 errors');
-    
-    // TODO: Re-enable when backend chat API endpoints are implemented
-    /*
-    if (!isConnected || shouldDisableChat) {
-      // If socket is not available, refresh via HTTP when user changes
-      fetchOnlineUsers();
-    }
-    */
+    // Disabled for now
+    console.log('User change refresh disabled');
   }, [user, isConnected, shouldDisableChat, fetchOnlineUsers]);
   
   // Handle user authentication changes
@@ -472,9 +442,6 @@ document.addEventListener('mouseup', () => {
       
       // Request current online users
       socket.emit('get-online-users');
-      
-      // Note: HTTP backup disabled to prevent 401 errors
-      // fetchOnlineUsers();
     }
     
     // Log user state changes for debugging
@@ -576,13 +543,7 @@ document.addEventListener('mouseup', () => {
     setShowUserList(prev => {
       const newShowUserList = !prev;
       
-      // Note: HTTP refresh disabled to prevent 401 errors
-      // TODO: Re-enable when backend chat API endpoints are implemented
-      /*
-      if (newShowUserList && (!isConnected || shouldDisableChat)) {
-        fetchOnlineUsers();
-      }
-      */
+      // Disabled for now
       
       return newShowUserList;
     });
@@ -708,14 +669,12 @@ document.addEventListener('mouseup', () => {
   const getOnlineUsersCount = () => {
     // Count all connected users
     const onlineUsers = activeUsers.filter(user => user.status === 'online').length;
-    console.log('📊 [COUNT] Current active users:', activeUsers.length, 'users:', activeUsers.map(u => u.username));
     // Always show at least 1 if current user is connected
     return Math.max(onlineUsers, (user && isConnected) ? 1 : 0);
   };
   
   const getChatUsersCount = () => {
     // Count users currently in chat
-    console.log('📊 [COUNT] Current chat users:', chatUsers.length, 'users:', chatUsers.map(u => u.username));
     return chatUsers.length;
   };
   
@@ -793,8 +752,6 @@ document.addEventListener('mouseup', () => {
   };
   
   const handleJoinChat = () => {
-    console.log('🚀 handleJoinChat called - User:', user ? (user.username || user.email) : 'null', 'isUserInChat:', isUserInChat);
-    
     if (user && !isUserInChat) {
       if (!socket || !isConnected) {
         alert('Chat server is not connected. Please try again.');
@@ -803,41 +760,28 @@ document.addEventListener('mouseup', () => {
       
       setIsUserInChat(true);
       
-      // Add current user to chat users list
+      // Immediately add current user to chat users list as fallback
       setChatUsers(prev => {
         const currentUserId = user._id || user.id;
         const userExists = prev.some(u => u.id === currentUserId);
         
-        console.log('🚀 Adding user to chat users list:', {
-          currentUserId,
-          userExists,
-          currentChatUsers: prev.length,
-          username: user.username || user.email || 'Anonymous'
-        });
-        
         if (!userExists) {
-          const newChatUsers = [...prev, {
+          return [...prev, {
             id: currentUserId,
             username: user.username || user.email || 'Anonymous',
             status: 'online',
             role: user.role || 'user'
           }];
-          console.log('🚀 New chat users list:', newChatUsers);
-          return newChatUsers;
         }
-        
         return prev;
       });
       
-      // Join chat via Socket.IO
+      // Join chat via Socket.IO - the server will also update the chat users list
       const joinData = {
         userId: user._id || user.id,
         username: user.username || user.email || 'Anonymous'
       };
-      console.log('🚀 Emitting join-chat with data:', joinData);
       socket.emit('join-chat', joinData);
-      
-      console.log('🚀 Joining chat via Socket.IO and updating local status');
       
       // Show welcome popup if not shown before
       if (!hasShownWelcome) {
@@ -856,19 +800,17 @@ document.addEventListener('mouseup', () => {
     if (user && isUserInChat && socket && isConnected) {
       setIsUserInChat(false);
       
-      // Remove current user from chat users list
+      // Immediately remove current user from chat users list
       setChatUsers(prev => {
         const currentUserId = user._id || user.id;
         return prev.filter(u => u.id !== currentUserId);
       });
       
-      // Emit leave-chat event instead of disconnecting
+      // Emit leave-chat event - the server will also update the chat users list
       socket.emit('leave-chat', {
         userId: user._id || user.id,
         username: user.username || user.email || 'Anonymous'
       });
-      
-      console.log('👋 Leaving chat via Socket.IO (keeping connection) and updating local status');
     }
   };
   
@@ -1373,31 +1315,6 @@ document.addEventListener('mouseup', () => {
                   </button>
                 </div>
                 <div className="chat-settings-content">
-                  {/* DEBUG PANEL - Remove this in production */}
-                  <div className="debug-section" style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '5px' }}>
-                    <div className="settings-label" style={{ color: '#dc3545', fontWeight: 'bold' }}>🔍 DEBUG INFO</div>
-                    <div style={{ fontSize: '12px', fontFamily: 'monospace' }}>
-                      <div><strong>Socket Connected:</strong> {isConnected ? '✅ Yes' : '❌ No'}</div>
-                      <div><strong>User In Chat:</strong> {isUserInChat ? '✅ Yes' : '❌ No'}</div>
-                      <div><strong>Active Users Count:</strong> {activeUsers.length}</div>
-                      <div><strong>Chat Users Count:</strong> {chatUsers.length}</div>
-                      <div><strong>Current User:</strong> {user ? (user.username || user.email) : 'Not logged in'}</div>
-                      <div><strong>Socket ID:</strong> {socket?.id || 'N/A'}</div>
-                      <details style={{ marginTop: '5px' }}>
-                        <summary style={{ cursor: 'pointer', color: '#007bff' }}>Active Users Data</summary>
-                        <pre style={{ fontSize: '10px', maxHeight: '100px', overflow: 'auto', backgroundColor: '#fff', padding: '5px', margin: '5px 0' }}>
-                          {JSON.stringify(activeUsers, null, 2)}
-                        </pre>
-                      </details>
-                      <details style={{ marginTop: '5px' }}>
-                        <summary style={{ cursor: 'pointer', color: '#007bff' }}>Chat Users Data</summary>
-                        <pre style={{ fontSize: '10px', maxHeight: '100px', overflow: 'auto', backgroundColor: '#fff', padding: '5px', margin: '5px 0' }}>
-                          {JSON.stringify(chatUsers, null, 2)}
-                        </pre>
-                      </details>
-                    </div>
-                  </div>
-                  
                   {user && user.role === 'admin' && (
                     <div className="admin-section">
                       <div className="settings-label">Admin Controls</div>
