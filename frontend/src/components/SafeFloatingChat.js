@@ -226,16 +226,12 @@ document.addEventListener('mouseup', () => {
       
       // Real-time message events
       newSocket.on('new-message', (message) => {
-        console.log('📨 [DEBUG] New message received:', message);
-        console.log('📨 [DEBUG] Message type:', message.messageType, 'isNotice:', message.isNotice);
-        console.log('📨 [DEBUG] From user:', message.username);
+        console.log('📨 New message received:', message);
         
         // Handle notice messages separately
         if (message.isNotice && message.messageType === 'admin') {
-          console.log('📢 [DEBUG] Handling as admin notice');
           handleNewNotice(message);
         } else {
-          console.log('💬 [DEBUG] Adding to regular messages');
           setMessages(prev => [...prev, message]);
         }
         
@@ -267,9 +263,6 @@ document.addEventListener('mouseup', () => {
       });
       
       newSocket.on('online-users-updated', (data) => {
-        console.log('👥 [DEBUG] online-users-updated received:', data.count, 'users');
-        console.log('👥 [DEBUG] Raw data:', data);
-        
         const mappedChatUsers = data.users.map(user => ({
           id: user.userId,
           username: user.username,
@@ -277,19 +270,7 @@ document.addEventListener('mouseup', () => {
           role: user.role
         }));
         
-        console.log('👥 [DEBUG] Mapped chat users:', mappedChatUsers);
-        
-        // Use functional update to ensure we get the latest state
-        setChatUsers(prevChatUsers => {
-          console.log('👥 [DEBUG] Previous chat users:', prevChatUsers.length);
-          console.log('👥 [DEBUG] Setting new chat users:', mappedChatUsers.length);
-          return mappedChatUsers;
-        });
-        
-        // Log current state after update
-        setTimeout(() => {
-          console.log('👥 [DEBUG] Chat users state after update should be:', mappedChatUsers.length);
-        }, 100);
+        setChatUsers(mappedChatUsers);
       });
       
       // Handle user-joined event for real-time updates
@@ -754,7 +735,6 @@ document.addEventListener('mouseup', () => {
         return;
       }
       
-      console.log('🚀 [DEBUG] User joining chat:', user.username || user.email);
       setIsUserInChat(true);
       
       // Join chat via Socket.IO - the server will send us the current chat users list
@@ -762,7 +742,6 @@ document.addEventListener('mouseup', () => {
         userId: user._id || user.id,
         username: user.username || user.email || 'Anonymous'
       };
-      console.log('🚀 [DEBUG] Emitting join-chat:', joinData);
       socket.emit('join-chat', joinData);
       
       // Show welcome popup if not shown before
