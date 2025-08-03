@@ -263,9 +263,6 @@ document.addEventListener('mouseup', () => {
       });
       
       newSocket.on('online-users-updated', (data) => {
-        console.log('👥 [EVENT] online-users-updated received:', data.count, 'users');
-        console.log('👥 [EVENT] Chat users data:', data.users);
-        
         const mappedChatUsers = data.users.map(user => ({
           id: user.userId,
           username: user.username,
@@ -273,7 +270,6 @@ document.addEventListener('mouseup', () => {
           role: user.role
         }));
         
-        console.log('👥 [EVENT] Setting chat users to:', mappedChatUsers);
         setChatUsers(mappedChatUsers);
       });
       
@@ -289,7 +285,13 @@ document.addEventListener('mouseup', () => {
           timestamp: data.timestamp,
           messageType: 'system'
         };
-        setMessages(prev => [...prev, joinMessage]);
+        console.log('👋 Adding join message to chat:', joinMessage);
+        setMessages(prev => {
+          console.log('👋 Current messages before adding join:', prev.length);
+          const newMessages = [...prev, joinMessage];
+          console.log('👋 New messages after adding join:', newMessages.length);
+          return newMessages;
+        });
       });
       
       // Handle user-left event for real-time updates
@@ -304,7 +306,13 @@ document.addEventListener('mouseup', () => {
           timestamp: data.timestamp,
           messageType: 'system'
         };
-        setMessages(prev => [...prev, leaveMessage]);
+        console.log('👋 Adding leave message to chat:', leaveMessage);
+        setMessages(prev => {
+          console.log('👋 Current messages before adding leave:', prev.length);
+          const newMessages = [...prev, leaveMessage];
+          console.log('👋 New messages after adding leave:', newMessages.length);
+          return newMessages;
+        });
       });
       
       newSocket.on('presence-updated', (data) => {
@@ -741,15 +749,12 @@ document.addEventListener('mouseup', () => {
         return;
       }
       
-      console.log('🚀 [JOIN] Starting join chat process for:', user.username || user.email);
       setIsUserInChat(true);
       
       // Immediately add current user to chat users list as fallback
       setChatUsers(prev => {
         const currentUserId = user._id || user.id;
         const userExists = prev.some(u => u.id === currentUserId);
-        
-        console.log('🚀 [JOIN] Adding user to local chat list. User exists:', userExists);
         
         if (!userExists) {
           const newUser = {
@@ -758,7 +763,6 @@ document.addEventListener('mouseup', () => {
             status: 'online',
             role: user.role || 'user'
           };
-          console.log('🚀 [JOIN] Adding new user to chat list:', newUser);
           return [...prev, newUser];
         }
         return prev;
@@ -769,7 +773,6 @@ document.addEventListener('mouseup', () => {
         userId: user._id || user.id,
         username: user.username || user.email || 'Anonymous'
       };
-      console.log('🚀 [JOIN] Emitting join-chat event:', joinData);
       socket.emit('join-chat', joinData);
       
       // Show welcome popup if not shown before
