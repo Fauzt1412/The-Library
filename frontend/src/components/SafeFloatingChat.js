@@ -263,6 +263,9 @@ document.addEventListener('mouseup', () => {
       });
       
       newSocket.on('online-users-updated', (data) => {
+        console.log('👥 [DEBUG] online-users-updated received:', data.count, 'users');
+        console.log('👥 [DEBUG] Raw data:', data);
+        
         const mappedChatUsers = data.users.map(user => ({
           id: user.userId,
           username: user.username,
@@ -270,7 +273,13 @@ document.addEventListener('mouseup', () => {
           role: user.role
         }));
         
+        console.log('👥 [DEBUG] Mapped chat users:', mappedChatUsers);
         setChatUsers(mappedChatUsers);
+        
+        // Log current state after update
+        setTimeout(() => {
+          console.log('👥 [DEBUG] Chat users state after update:', mappedChatUsers.length);
+        }, 100);
       });
       
       // Handle user-joined event for real-time updates
@@ -735,6 +744,7 @@ document.addEventListener('mouseup', () => {
         return;
       }
       
+      console.log('🚀 [DEBUG] User joining chat:', user.username || user.email);
       setIsUserInChat(true);
       
       // Join chat via Socket.IO - the server will send us the current chat users list
@@ -742,6 +752,7 @@ document.addEventListener('mouseup', () => {
         userId: user._id || user.id,
         username: user.username || user.email || 'Anonymous'
       };
+      console.log('🚀 [DEBUG] Emitting join-chat:', joinData);
       socket.emit('join-chat', joinData);
       
       // Show welcome popup if not shown before

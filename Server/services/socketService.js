@@ -111,6 +111,7 @@ class SocketService {
             this.socketToUser.set(socket.id, { userId, username: user.username, role: user.role || 'user' });
           }
 
+          // Add user to chat room tracking FIRST
           this.onlineUsers.set(userId, {
             socketId: socket.id,
             username: user.username,
@@ -123,13 +124,13 @@ class SocketService {
           const recentMessages = await ChatMessage.getRecentMessages(50);
           socket.emit('recent-messages', recentMessages.reverse());
 
-          // Send current chat users list to the user who just joined
-          const currentChatUsers = this.getOnlineUsersList();
+          // Send updated chat users list to the user who just joined (now includes them)
+          const updatedChatUsers = this.getOnlineUsersList();
           socket.emit('online-users-updated', {
-            count: currentChatUsers.length,
-            users: currentChatUsers
+            count: updatedChatUsers.length,
+            users: updatedChatUsers
           });
-          console.log(`📤 Sent current chat users to ${user.username}:`, currentChatUsers.length, 'users');
+          console.log(`📤 Sent updated chat users to ${user.username}:`, updatedChatUsers.length, 'users:', updatedChatUsers.map(u => u.username));
 
           // Emit to all users in chat room, including the user who just joined
           this.io.to('chat-room').emit('user-joined', {
@@ -521,6 +522,8 @@ class SocketService {
       username: info.username,
       role: info.role
     }));
+
+    console.log(`📢 Broadcasting chat users to all:`, onlineUsersArray.length, 'users:', onlineUsersArray.map(u => u.username));
 
     // Broadcast to ALL connected sockets, not just chat-room
     this.io.emit('online-users-updated', {
