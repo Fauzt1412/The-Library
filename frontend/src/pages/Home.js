@@ -226,32 +226,32 @@ const Home = () => {
       {/* Features Section */}
       <section className="py-5">
         <div className="container">
-          <h2 className="section-title">Why Choose Us?</h2>
+          <h2 className="section-title">Why Choose The Library?</h2>
           <div className="row">
             <div className="col-md-4 text-center mb-4">
               <div className="card border-0 h-100">
                 <div className="card-body">
-                  <i className="fas fa-shipping-fast fa-3x text-primary mb-3"></i>
-                  <h5>Fast Delivery</h5>
-                  <p className="card-text">Get your books and games delivered quickly to your doorstep.</p>
+                  <i className="fas fa-database fa-3x text-primary mb-3"></i>
+                  <h5>Comprehensive Database</h5>
+                  <p className="card-text">Access a vast collection of books and games with detailed information and reviews.</p>
                 </div>
               </div>
             </div>
             <div className="col-md-4 text-center mb-4">
               <div className="card border-0 h-100">
                 <div className="card-body">
-                  <i className="fas fa-star fa-3x text-warning mb-3"></i>
-                  <h5>Quality Products</h5>
-                  <p className="card-text">We offer only the best books and games from trusted publishers.</p>
+                  <i className="fas fa-search fa-3x text-warning mb-3"></i>
+                  <h5>Easy Discovery</h5>
+                  <p className="card-text">Find your next favorite book or game with our intuitive search and recommendation system.</p>
                 </div>
               </div>
             </div>
             <div className="col-md-4 text-center mb-4">
               <div className="card border-0 h-100">
                 <div className="card-body">
-                  <i className="fas fa-headset fa-3x text-success mb-3"></i>
-                  <h5>24/7 Support</h5>
-                  <p className="card-text">Our customer support team is always ready to help you.</p>
+                  <i className="fas fa-envelope fa-3x text-success mb-3"></i>
+                  <h5>Get in Touch</h5>
+                  <p className="card-text">Have questions or suggestions? Contact us at <a href="mailto:vannq1412@gmail.com" className="text-decoration-none">vannq1412@gmail.com</a></p>
                 </div>
               </div>
             </div>

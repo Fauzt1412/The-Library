@@ -1,6 +1,6 @@
-# Library & Games Store - MERN Stack Application
+# The Library - Digital Content Management Platform
 
-A full-stack web application for managing a library and games store, built with the MERN stack (MongoDB, Express.js, React, Node.js).
+A comprehensive full-stack web application for managing and sharing digital books and games, built with the MERN stack (MongoDB, Express.js, React, Node.js). This platform combines content management, user interaction, and real-time communication features.
 
 ## Features
 
