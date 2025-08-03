@@ -187,6 +187,8 @@ const FileUploadWithToggle = ({
         <input
           ref={fileInputRef}
           type="file"
+          id="file-upload-input"
+          name="file-upload-input"
           accept={accept}
           onChange={handleChange}
           style={{ display: 'none' }}

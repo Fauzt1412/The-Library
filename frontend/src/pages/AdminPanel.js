@@ -881,6 +881,8 @@ const AdminPanel = () => {
               <input
                 type="text"
                 className="form-control"
+                id="admin-book-title"
+                name="admin-book-title"
                 value={bookForm.title}
                 onChange={(e) => setBookForm({...bookForm, title: e.target.value})}
                 required
@@ -891,6 +893,8 @@ const AdminPanel = () => {
               <input
                 type="text"
                 className="form-control"
+                id="admin-book-author"
+                name="admin-book-author"
                 value={bookForm.author}
                 onChange={(e) => setBookForm({...bookForm, author: e.target.value})}
                 required
@@ -903,6 +907,8 @@ const AdminPanel = () => {
               <input
                 type="text"
                 className="form-control"
+                id="admin-book-category"
+                name="admin-book-category"
                 value={bookForm.categories}
                 onChange={(e) => setBookForm({...bookForm, categories: e.target.value})}
                 required
@@ -916,6 +922,8 @@ const AdminPanel = () => {
               <input
                 type="date"
                 className="form-control"
+                id="admin-book-published-date"
+                name="admin-book-published-date"
                 value={bookForm.publishedDate}
                 onChange={(e) => setBookForm({...bookForm, publishedDate: e.target.value})}
                 required
@@ -958,6 +966,8 @@ const AdminPanel = () => {
                         <input
                           type="text"
                           className="form-control"
+                          id={`admin-book-link-name-${index}`}
+                          name={`admin-book-link-name-${index}`}
                           placeholder="Platform/Store Name"
                           value={link.name}
                           onChange={(e) => updateLink('book', index, 'name', e.target.value)}
@@ -967,6 +977,8 @@ const AdminPanel = () => {
                         <input
                           type="url"
                           className="form-control"
+                          id={`admin-book-link-url-${index}`}
+                          name={`admin-book-link-url-${index}`}
                           placeholder="https://..."
                           value={link.url}
                           onChange={(e) => updateLink('book', index, 'url', e.target.value)}
@@ -1000,6 +1012,8 @@ const AdminPanel = () => {
               <label className="form-label">Description</label>
               <textarea
                 className="form-control"
+                id="admin-book-description"
+                name="admin-book-description"
                 rows="3"
                 value={bookForm.description}
                 onChange={(e) => setBookForm({...bookForm, description: e.target.value})}
@@ -1025,6 +1039,8 @@ const AdminPanel = () => {
               <input
                 type="text"
                 className="form-control"
+                id="admin-game-title"
+                name="admin-game-title"
                 value={gameForm.title}
                 onChange={(e) => setGameForm({...gameForm, title: e.target.value})}
                 required
@@ -1035,6 +1051,8 @@ const AdminPanel = () => {
               <input
                 type="text"
                 className="form-control"
+                id="admin-game-developer"
+                name="admin-game-developer"
                 value={gameForm.developer}
                 onChange={(e) => setGameForm({...gameForm, developer: e.target.value})}
                 required
@@ -1047,6 +1065,8 @@ const AdminPanel = () => {
               <input
                 type="text"
                 className="form-control"
+                id="admin-game-genre"
+                name="admin-game-genre"
                 value={gameForm.genre}
                 onChange={(e) => setGameForm({...gameForm, genre: e.target.value})}
                 required
@@ -1057,6 +1077,8 @@ const AdminPanel = () => {
               <input
                 type="text"
                 className="form-control"
+                id="admin-game-platform"
+                name="admin-game-platform"
                 value={gameForm.platform}
                 onChange={(e) => setGameForm({...gameForm, platform: e.target.value})}
                 required
@@ -1069,6 +1091,8 @@ const AdminPanel = () => {
               <input
                 type="date"
                 className="form-control"
+                id="admin-game-release-date"
+                name="admin-game-release-date"
                 value={gameForm.releaseDate}
                 onChange={(e) => setGameForm({...gameForm, releaseDate: e.target.value})}
                 required
@@ -1113,6 +1137,8 @@ const AdminPanel = () => {
                       <input
                         type="text"
                         className="form-control"
+                        id={`admin-game-link-name-${index}`}
+                        name={`admin-game-link-name-${index}`}
                         placeholder="Platform Name (e.g., Steam)"
                         value={link.name}
                         onChange={(e) => updateLink('game', index, 'name', e.target.value)}
@@ -1122,6 +1148,8 @@ const AdminPanel = () => {
                       <input
                         type="url"
                         className="form-control"
+                        id={`admin-game-link-url-${index}`}
+                        name={`admin-game-link-url-${index}`}
                         placeholder="https://..."
                         value={link.url}
                         onChange={(e) => updateLink('game', index, 'url', e.target.value)}
@@ -1155,6 +1183,8 @@ const AdminPanel = () => {
             <label className="form-label">Description</label>
             <textarea
               className="form-control"
+              id="admin-game-description"
+              name="admin-game-description"
               rows="3"
               value={gameForm.description}
               onChange={(e) => setGameForm({...gameForm, description: e.target.value})}
@@ -1180,6 +1210,8 @@ const AdminPanel = () => {
               <input
                 type="text"
                 className="form-control"
+                id="admin-user-username"
+                name="admin-user-username"
                 value={userForm.username}
                 onChange={(e) => setUserForm({...userForm, username: e.target.value})}
                 required
@@ -1190,6 +1222,8 @@ const AdminPanel = () => {
               <input
                 type="email"
                 className="form-control"
+                id="admin-user-email"
+                name="admin-user-email"
                 value={userForm.email}
                 onChange={(e) => setUserForm({...userForm, email: e.target.value})}
                 required
@@ -1202,6 +1236,8 @@ const AdminPanel = () => {
               <input
                 type="password"
                 className="form-control"
+                id="admin-user-password"
+                name="admin-user-password"
                 value={userForm.password}
                 onChange={(e) => setUserForm({...userForm, password: e.target.value})}
                 required={modalType === 'add'}
@@ -1211,6 +1247,8 @@ const AdminPanel = () => {
               <label className="form-label">Role</label>
               <select
                 className="form-select"
+                id="admin-user-role"
+                name="admin-user-role"
                 value={userForm.role}
                 onChange={(e) => setUserForm({...userForm, role: e.target.value})}
                 required
@@ -1693,6 +1731,7 @@ const AdminPanel = () => {
                       </label>
                       <textarea
                         id="rejectionReason"
+                        name="rejectionReason"
                         className="form-control"
                         rows="4"
                         placeholder="Please provide a detailed reason for rejecting this submission. This message will be sent to the user."

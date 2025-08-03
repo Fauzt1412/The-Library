@@ -12,6 +12,10 @@ const SafeFloatingChat = () => {
     window.location.hostname !== '127.0.0.1';
   const hasBackendUrl = process.env.REACT_APP_API_URL || process.env.REACT_APP_SERVER_URL;
   const shouldDisableChat = isProduction && !hasBackendUrl;
+  
+  // Temporary: Disable chat in development if you don't want to run the backend
+  // Uncomment the line below to disable chat completely:
+  // const shouldDisableChat = true;
 
   //moving the panel
   let isDragging = false;
@@ -160,16 +164,34 @@ document.addEventListener('mouseup', () => {
       
       newSocket.on('connect', () => {
         console.log('✅ Connected to chat server');
+        console.log('🔍 [DEBUG] Socket ID:', newSocket.id);
+        console.log('🔍 [DEBUG] Server URL:', serverUrl);
         setIsConnected(true);
         setConnectionError(null);
         
         // Register presence if user is logged in (so they can see online users)
         if (user && user._id) {
           console.log('📡 Registering user presence for:', user.username || user.email);
+          console.log('🔍 [DEBUG] User data being sent:', {
+            userId: user._id || user.id,
+            username: user.username || user.email || 'Anonymous',
+            role: user.role
+          });
           newSocket.emit('register-presence', {
             userId: user._id || user.id,
             username: user.username || user.email || 'Anonymous'
           });
+          
+          // AUTO-JOIN CHAT: Automatically join chat when connecting (optional)
+          // Uncomment the lines below if you want users to auto-join chat:
+          /*
+          console.log('🚀 Auto-joining chat for:', user.username || user.email);
+          setIsUserInChat(true);
+          newSocket.emit('join-chat', {
+            userId: user._id || user.id,
+            username: user.username || user.email || 'Anonymous'
+          });
+          */
           
           // Ensure current user is in activeUsers list
           setActiveUsers(prev => {
@@ -279,32 +301,50 @@ document.addEventListener('mouseup', () => {
       
       newSocket.on('online-users-updated', (data) => {
         console.log('👥 Online users updated (chat members):', data.count);
-        setChatUsers(data.users.map(user => ({
+        console.log('👥 Chat users data:', data.users);
+        console.log('🔍 [DEBUG] Raw chat users data:', JSON.stringify(data, null, 2));
+        
+        const mappedChatUsers = data.users.map(user => ({
           id: user.userId,
           username: user.username,
           status: 'online',
           role: user.role
-        })));
+        }));
+        console.log('🔍 [DEBUG] Mapped chat users:', mappedChatUsers);
+        
+        setChatUsers(mappedChatUsers);
       });
       
       newSocket.on('presence-updated', (data) => {
         console.log('👥 Presence updated (all connected users):', data.count);
-        setActiveUsers(data.users.map(user => ({
+        console.log('👥 Active users data:', data.users);
+        console.log('🔍 [DEBUG] Raw presence data:', JSON.stringify(data, null, 2));
+        
+        const mappedUsers = data.users.map(user => ({
           id: user.userId,
           username: user.username,
           status: 'online',
           role: user.role
-        })));
+        }));
+        console.log('🔍 [DEBUG] Mapped active users:', mappedUsers);
+        
+        setActiveUsers(mappedUsers);
       });
       
       newSocket.on('online-users-list', (data) => {
         console.log('👥 Online users list received:', data.count);
-        setActiveUsers(data.users.map(user => ({
+        console.log('👥 Online users list data:', data.users);
+        console.log('🔍 [DEBUG] Raw online users data:', JSON.stringify(data, null, 2));
+        
+        const mappedUsers = data.users.map(user => ({
           id: user.userId,
           username: user.username,
           status: 'online',
           role: user.role
-        })));
+        }));
+        console.log('🔍 [DEBUG] Mapped online users:', mappedUsers);
+        
+        setActiveUsers(mappedUsers);
       });
       
       newSocket.on('message-deleted', (data) => {
@@ -668,12 +708,14 @@ document.addEventListener('mouseup', () => {
   const getOnlineUsersCount = () => {
     // Count all connected users
     const onlineUsers = activeUsers.filter(user => user.status === 'online').length;
+    console.log('📊 [COUNT] Current active users:', activeUsers.length, 'users:', activeUsers.map(u => u.username));
     // Always show at least 1 if current user is connected
     return Math.max(onlineUsers, (user && isConnected) ? 1 : 0);
   };
   
   const getChatUsersCount = () => {
     // Count users currently in chat
+    console.log('📊 [COUNT] Current chat users:', chatUsers.length, 'users:', chatUsers.map(u => u.username));
     return chatUsers.length;
   };
   
@@ -766,23 +808,34 @@ document.addEventListener('mouseup', () => {
         const currentUserId = user._id || user.id;
         const userExists = prev.some(u => u.id === currentUserId);
         
+        console.log('🚀 Adding user to chat users list:', {
+          currentUserId,
+          userExists,
+          currentChatUsers: prev.length,
+          username: user.username || user.email || 'Anonymous'
+        });
+        
         if (!userExists) {
-          return [...prev, {
+          const newChatUsers = [...prev, {
             id: currentUserId,
             username: user.username || user.email || 'Anonymous',
             status: 'online',
             role: user.role || 'user'
           }];
+          console.log('🚀 New chat users list:', newChatUsers);
+          return newChatUsers;
         }
         
         return prev;
       });
       
       // Join chat via Socket.IO
-      socket.emit('join-chat', {
+      const joinData = {
         userId: user._id || user.id,
         username: user.username || user.email || 'Anonymous'
-      });
+      };
+      console.log('🚀 Emitting join-chat with data:', joinData);
+      socket.emit('join-chat', joinData);
       
       console.log('🚀 Joining chat via Socket.IO and updating local status');
       
@@ -1320,6 +1373,31 @@ document.addEventListener('mouseup', () => {
                   </button>
                 </div>
                 <div className="chat-settings-content">
+                  {/* DEBUG PANEL - Remove this in production */}
+                  <div className="debug-section" style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '5px' }}>
+                    <div className="settings-label" style={{ color: '#dc3545', fontWeight: 'bold' }}>🔍 DEBUG INFO</div>
+                    <div style={{ fontSize: '12px', fontFamily: 'monospace' }}>
+                      <div><strong>Socket Connected:</strong> {isConnected ? '✅ Yes' : '❌ No'}</div>
+                      <div><strong>User In Chat:</strong> {isUserInChat ? '✅ Yes' : '❌ No'}</div>
+                      <div><strong>Active Users Count:</strong> {activeUsers.length}</div>
+                      <div><strong>Chat Users Count:</strong> {chatUsers.length}</div>
+                      <div><strong>Current User:</strong> {user ? (user.username || user.email) : 'Not logged in'}</div>
+                      <div><strong>Socket ID:</strong> {socket?.id || 'N/A'}</div>
+                      <details style={{ marginTop: '5px' }}>
+                        <summary style={{ cursor: 'pointer', color: '#007bff' }}>Active Users Data</summary>
+                        <pre style={{ fontSize: '10px', maxHeight: '100px', overflow: 'auto', backgroundColor: '#fff', padding: '5px', margin: '5px 0' }}>
+                          {JSON.stringify(activeUsers, null, 2)}
+                        </pre>
+                      </details>
+                      <details style={{ marginTop: '5px' }}>
+                        <summary style={{ cursor: 'pointer', color: '#007bff' }}>Chat Users Data</summary>
+                        <pre style={{ fontSize: '10px', maxHeight: '100px', overflow: 'auto', backgroundColor: '#fff', padding: '5px', margin: '5px 0' }}>
+                          {JSON.stringify(chatUsers, null, 2)}
+                        </pre>
+                      </details>
+                    </div>
+                  </div>
+                  
                   {user && user.role === 'admin' && (
                     <div className="admin-section">
                       <div className="settings-label">Admin Controls</div>
@@ -1612,6 +1690,8 @@ document.addEventListener('mouseup', () => {
                     <input
                       ref={chatInputRef}
                       type="text"
+                      id="chat-message-input"
+                      name="chat-message-input"
                       className={`chat-input ${isNoticeMode ? 'notice-input' : ''}`}
                       placeholder={isNoticeMode ? '📢 Type an important notice...' : 'Share your thoughts with the community...'}
                       value={newMessage}

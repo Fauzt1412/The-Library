@@ -200,6 +200,8 @@ const SubmitContent = () => {
                   <input
                     type="text"
                     className="form-control"
+                    id={`${type}-link-name-${index}`}
+                    name={`${type}-link-name-${index}`}
                     placeholder="Platform/Store Name"
                     value={link.name}
                     onChange={(e) => updateLink(type, index, 'name', e.target.value)}
@@ -209,6 +211,8 @@ const SubmitContent = () => {
                   <input
                     type="url"
                     className="form-control"
+                    id={`${type}-link-url-${index}`}
+                    name={`${type}-link-url-${index}`}
                     placeholder="https://..."
                     value={link.url}
                     onChange={(e) => updateLink(type, index, 'url', e.target.value)}
@@ -306,20 +310,24 @@ const SubmitContent = () => {
               <>
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Title *</label>
+                    <label htmlFor="book-title" className="form-label">Title *</label>
                     <input
                       type="text"
                       className="form-control"
+                      id="book-title"
+                      name="book-title"
                       value={bookForm.title}
                       onChange={(e) => setBookForm({...bookForm, title: e.target.value})}
                       required
                     />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Author *</label>
+                    <label htmlFor="book-author" className="form-label">Author *</label>
                     <input
                       type="text"
                       className="form-control"
+                      id="book-author"
+                      name="book-author"
                       value={bookForm.author}
                       onChange={(e) => setBookForm({...bookForm, author: e.target.value})}
                       required
@@ -329,10 +337,12 @@ const SubmitContent = () => {
                 
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Category *</label>
+                    <label htmlFor="book-category" className="form-label">Category *</label>
                     <input
                       type="text"
                       className="form-control"
+                      id="book-category"
+                      name="book-category"
                       value={bookForm.categories}
                       onChange={(e) => setBookForm({...bookForm, categories: e.target.value})}
                       required
@@ -343,10 +353,12 @@ const SubmitContent = () => {
                 
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Published Date *</label>
+                    <label htmlFor="book-published-date" className="form-label">Published Date *</label>
                     <input
                       type="date"
                       className="form-control"
+                      id="book-published-date"
+                      name="book-published-date"
                       value={bookForm.publishedDate}
                       onChange={(e) => setBookForm({...bookForm, publishedDate: e.target.value})}
                       required
@@ -382,20 +394,24 @@ const SubmitContent = () => {
               <>
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Title *</label>
+                    <label htmlFor="game-title" className="form-label">Title *</label>
                     <input
                       type="text"
                       className="form-control"
+                      id="game-title"
+                      name="game-title"
                       value={gameForm.title}
                       onChange={(e) => setGameForm({...gameForm, title: e.target.value})}
                       required
                     />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Developer *</label>
+                    <label htmlFor="game-developer" className="form-label">Developer *</label>
                     <input
                       type="text"
                       className="form-control"
+                      id="game-developer"
+                      name="game-developer"
                       value={gameForm.developer}
                       onChange={(e) => setGameForm({...gameForm, developer: e.target.value})}
                       required
@@ -405,20 +421,24 @@ const SubmitContent = () => {
                 
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Genre *</label>
+                    <label htmlFor="game-genre" className="form-label">Genre *</label>
                     <input
                       type="text"
                       className="form-control"
+                      id="game-genre"
+                      name="game-genre"
                       value={gameForm.genre}
                       onChange={(e) => setGameForm({...gameForm, genre: e.target.value})}
                       required
                     />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Platform *</label>
+                    <label htmlFor="game-platform" className="form-label">Platform *</label>
                     <input
                       type="text"
                       className="form-control"
+                      id="game-platform"
+                      name="game-platform"
                       value={gameForm.platform}
                       onChange={(e) => setGameForm({...gameForm, platform: e.target.value})}
                       required
@@ -428,10 +448,12 @@ const SubmitContent = () => {
                 
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Release Date *</label>
+                    <label htmlFor="game-release-date" className="form-label">Release Date *</label>
                     <input
                       type="date"
                       className="form-control"
+                      id="game-release-date"
+                      name="game-release-date"
                       value={gameForm.releaseDate}
                       onChange={(e) => setGameForm({...gameForm, releaseDate: e.target.value})}
                       required
@@ -468,9 +490,11 @@ const SubmitContent = () => {
             )}
             
             <div className="mb-3">
-              <label className="form-label">Description *</label>
+              <label htmlFor="content-description" className="form-label">Description *</label>
               <textarea
                 className="form-control"
+                id="content-description"
+                name="content-description"
                 rows="4"
                 value={activeTab === 'book' ? bookForm.description : gameForm.description}
                 onChange={(e) => {

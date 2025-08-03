@@ -352,6 +352,7 @@ const Settings = () => {
                       type="text"
                       className="form-control"
                       id="username"
+                      name="username"
                       value={profileForm.username}
                       onChange={(e) => setProfileForm({...profileForm, username: e.target.value})}
                       required
@@ -364,6 +365,7 @@ const Settings = () => {
                       type="email"
                       className="form-control"
                       id="email"
+                      name="email"
                       value={profileForm.email}
                       onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
                       required
@@ -453,6 +455,7 @@ const Settings = () => {
                         type="password"
                         className="form-control"
                         id="currentPassword"
+                        name="currentPassword"
                         value={passwordForm.currentPassword}
                         onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
                         required
@@ -465,6 +468,7 @@ const Settings = () => {
                         type="password"
                         className="form-control"
                         id="newPassword"
+                        name="newPassword"
                         value={passwordForm.newPassword}
                         onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
                         minLength="6"
@@ -479,6 +483,7 @@ const Settings = () => {
                         type="password"
                         className="form-control"
                         id="confirmPassword"
+                        name="confirmPassword"
                         value={passwordForm.confirmPassword}
                         onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
                         required
@@ -556,6 +561,7 @@ const Settings = () => {
                         type="password"
                         className="form-control"
                         id="deletePassword"
+                        name="deletePassword"
                         value={deletePassword}
                         onChange={(e) => setDeletePassword(e.target.value)}
                         placeholder="Enter your password"
@@ -622,6 +628,7 @@ const Settings = () => {
                       className="form-check-input"
                       type="checkbox"
                       id="themeSwitch"
+                      name="themeSwitch"
                       checked={isDark}
                       onChange={toggleTheme}
                       style={{ fontSize: '1.2rem' }}
