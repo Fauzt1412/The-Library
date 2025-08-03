@@ -124,14 +124,6 @@ class SocketService {
           const recentMessages = await ChatMessage.getRecentMessages(50);
           socket.emit('recent-messages', recentMessages.reverse());
 
-          // Send updated chat users list to the user who just joined (now includes them)
-          const updatedChatUsers = this.getOnlineUsersList();
-          socket.emit('online-users-updated', {
-            count: updatedChatUsers.length,
-            users: updatedChatUsers
-          });
-          console.log(`📤 Sent updated chat users to ${user.username}:`, updatedChatUsers.length, 'users:', updatedChatUsers.map(u => u.username));
-
           // Emit to all users in chat room, including the user who just joined
           this.io.to('chat-room').emit('user-joined', {
             userId,
@@ -523,9 +515,9 @@ class SocketService {
       role: info.role
     }));
 
-    console.log(`📢 Broadcasting chat users to all:`, onlineUsersArray.length, 'users:', onlineUsersArray.map(u => u.username));
+    console.log(`📢 Broadcasting chat users:`, onlineUsersArray.length, 'users:', onlineUsersArray.map(u => u.username));
 
-    // Broadcast to ALL connected sockets, not just chat-room
+    // Broadcast to ALL connected sockets
     this.io.emit('online-users-updated', {
       count: onlineUsersArray.length,
       users: onlineUsersArray

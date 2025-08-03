@@ -274,11 +274,17 @@ document.addEventListener('mouseup', () => {
         }));
         
         console.log('👥 [DEBUG] Mapped chat users:', mappedChatUsers);
-        setChatUsers(mappedChatUsers);
+        
+        // Use functional update to ensure we get the latest state
+        setChatUsers(prevChatUsers => {
+          console.log('👥 [DEBUG] Previous chat users:', prevChatUsers.length);
+          console.log('👥 [DEBUG] Setting new chat users:', mappedChatUsers.length);
+          return mappedChatUsers;
+        });
         
         // Log current state after update
         setTimeout(() => {
-          console.log('👥 [DEBUG] Chat users state after update:', mappedChatUsers.length);
+          console.log('👥 [DEBUG] Chat users state after update should be:', mappedChatUsers.length);
         }, 100);
       });
       
