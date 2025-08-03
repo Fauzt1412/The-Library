@@ -77,11 +77,27 @@ const Books = () => {
   const filteredBooks = safeBooks.filter(book => {
     const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          book.author.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !categoryFilter || book.categories.toLowerCase().includes(categoryFilter.toLowerCase());
+    
+    // Normalize book categories for comparison
+    const bookCategories = book.categories
+      ? book.categories.split(',').map(cat => cat.trim().charAt(0).toUpperCase() + cat.trim().slice(1).toLowerCase())
+      : [];
+    
+    const matchesCategory = !categoryFilter || bookCategories.includes(categoryFilter);
     return matchesSearch && matchesCategory;
   });
 
-  const categories = [...new Set(safeBooks.map(book => book.categories))];
+  // Extract and normalize categories to prevent duplicates
+  const categories = [...new Set(
+    safeBooks
+      .flatMap(book => 
+        book.categories
+          ? book.categories.split(',').map(cat => cat.trim())
+          : []
+      )
+      .filter(cat => cat.length > 0)
+      .map(cat => cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase())
+  )].sort();
 
   if (loading) {
     return (
