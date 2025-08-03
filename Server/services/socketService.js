@@ -123,7 +123,8 @@ class SocketService {
           const recentMessages = await ChatMessage.getRecentMessages(50);
           socket.emit('recent-messages', recentMessages.reverse());
 
-          socket.to('chat-room').emit('user-joined', {
+          // Emit to all users in chat room, including the user who just joined
+          this.io.to('chat-room').emit('user-joined', {
             userId,
             username: user.username,
             timestamp: new Date()
@@ -450,7 +451,8 @@ class SocketService {
           }
 
           if (userInfo) {
-            socket.to('chat-room').emit('user-left', {
+            // Emit to all users in chat room
+            this.io.to('chat-room').emit('user-left', {
               userId,
               username: userInfo.username,
               timestamp: new Date()
@@ -480,7 +482,8 @@ class SocketService {
           this.userSockets.delete(socket.id);
 
           if (chatUserInfo) {
-            socket.to('chat-room').emit('user-left', {
+            // Emit to all users in chat room
+            this.io.to('chat-room').emit('user-left', {
               userId,
               username: chatUserInfo.username,
               timestamp: new Date()
